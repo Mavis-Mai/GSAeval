@@ -6,7 +6,7 @@ function Invoke-Git {
     if ($LASTEXITCODE -ne 0) { throw "Git failed: $args" }
 }
 
-if ((& git branch --show-current) -ne 'master') { throw 'Run this script on the master branch.' }
+if (-not (& git branch --show-current)) { throw 'Check out a branch before publishing.' }
 if (& git ls-files --unmerged) { throw 'Resolve the existing merge conflicts before publishing.' }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {

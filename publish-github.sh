@@ -5,7 +5,7 @@ if ! command -v gh >/dev/null && [[ -x /tmp/gsaeval-gh/bin/gh ]]; then
     export PATH="/tmp/gsaeval-gh/bin:$PATH"
 fi
 command -v gh >/dev/null || { echo 'Install GitHub CLI (gh) in WSL first.' >&2; exit 1; }
-[[ $(git branch --show-current) == master ]] || { echo 'Expected master branch.' >&2; exit 1; }
+[[ -n $(git branch --show-current) ]] || { echo 'Check out a branch before publishing.' >&2; exit 1; }
 [[ -z $(git ls-files --unmerged) ]] || { echo 'Resolve existing merge conflicts first.' >&2; exit 1; }
 gh auth status || gh auth login --hostname github.com --git-protocol https --web
 gh auth setup-git
