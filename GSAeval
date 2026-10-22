@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+import os
+import sys
+import importlib.util
+import subprocess
+import argparse
+from typing import Dict, List, Optional
+
+
+class GSAeval:
+    """
+    Genomics Structure annotion Evaluator
+    """
+    def __init__(self):
+        self.version = "2026_08_26"
+        self.script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "script")
+        self.tools = {
+            'csq2db': {
+                'description': 'The integration process of CSQ, including build, calculate and summarize.',
+                'function':  "csq_oneStep",
+                'type': 'Overview'
+            },
+            'csq2sp': {
+                'description': 'The integration process of CSQ comparing in two species',
+                'function':  "csq2sp_oneStep",
+                'type': 'Gobal assessment'
+            },
+            'csq2spbatch': {
+                'description': 'Batch CSQ comparison, conserved-gene NJ trees, and gene assessment',
+                'function':  "CSQ2spbatch",
+                'type': 'Gobal assessment'
+            },
+            'build': {
+                'description': 'Build the library with Splice information.',
+                'function':  "build_junction_lib_v5",
+                'type': 'non-Showed'
+            },
+            'calculate': {
+                'description': 'Calculate the qCSS value.',
+                'function':  "calc_csq",
+                'type': 'non-Showed'
+            },
+            'summarize': {
+                'description': 'Summarize the csq information',
+                'function':  "csq_summarize",
+                'type': 'non-Showed'
+                
+            },
+            'mergeplot': {
+                'description': 'Integrate all CSQ results to plot.',
+                'function': "mergeCSQ",
+                'type': 'Other Tools'
+            },
+             'tran': {
+                'description': 'The integration assessment process of RNA-seq, including the detection of gene number, splice junction, TES/TSS from RNA-seq, and reporter generation.',
+                'function':  "rna_oneStep",
+                'type': 'Gobal assessment'
+            },
+            'gene': {
+                'description': 'Check the intersection information of gene loci',
+                'function': "bed_comparisonv5",
+                'type': 'non-Showed'
+            },
+            'sj': {
+                'description': 'Check the intersection information of junctions',
+                'function':  "checkGeneSJv5",
+                'type': 'non-Showed'
+            },
+            'kmer': {
+                'description': 'Kmer sampling from each transcriptome data. Dependency: mash',
+                'function': "mash_compute",
+                'type': 'non-Showed'                
+            },
+            'sample': {
+                'description': 'Cluster the distance matrix of the sampled Kmers and selected the representative samples.',
+                'function': "clusterv2",
+                'type': 'non-Showed'
+            },
+            'mergebam': {
+                'description': 'Merge the bam files',
+                'function':  "merge_bam",
+                'type': 'non-Showed'
+            },
+            'filterbam': {
+                'description': 'Slimming down of bam files',
+                'function': "filter_bam",
+                'type': 'non-Showed'
+            },
+            'predict': {
+                'description': 'Predict gene loci from bam file.',
+                'function': "extract_gene_from_Bam",
+                'type': 'non-Showed'
+            },
+            'extact_gene_from_gxf': {
+                'description': 'Extact gene loci from annation file(gff3).',
+                'function':  "extract_gene_from_GFF",
+                'type': 'non-Showed'
+            },
+            'extact_junctions_from_gxf': {
+                'description': 'Extact junction from annation file(gff3).',
+                'function':  "extract_SJ_from_GFF",
+                'type': 'non-Showed'
+            },
+            'convert_Star_junction_tsv': {
+                'description': 'Convert the junction table of STAR to bed.',
+                'function':  "switchStar_SJ",
+                'type': 'non-Showed'
+            },
+            'convert_Regtools_junction_tsv': {
+                'description': 'Convert the junction table of Regtools to bed.',
+                'function':  "swtichRegtools_SJ",
+                'type': 'non-Showed'
+            },
+            'checkgene': {
+                'description': 'Check the gene (id/CDS-seq) by RNA-seq raw data',
+                'function': "checkGenev2",
+                'type': 'Other Tools'
+            },
+            'mergereport': {
+                'description': 'merged all report(.md5).',
+                'function':  "generatereport",
+                'type': 'non-Showed'
+            },  
+        }
+            
+        
+    def list_tools(self):
+        """列出所有可用工具"""
+        print("Available tools:")
+        typelist=[]
+        for name, info in self.tools.items():
+            type_=info["type"]
+            if type_ =="non-Showed":
+                continue 
+            elif type_ not in typelist:
+                print('')
+                print (f'{type_}:')
+                typelist.append(type_)
+            print(f"  {name:30} {info['description']}")
+
+        print("\nUsage: python GSAeval.py <tool_name>")
+        print("Usage: GSAeval <tool_name>")
+        print(f"Version: {self.version}")
+
+    def run_tool(self, module_name, args_list=[]):
+        if module_name == "mash_compute":
+            from script.mash_compute import execute_mash_analysis
+            # 创建解析器解析传入的参数
+            parser = argparse.ArgumentParser(description='Mash calculation',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+            parser.add_argument("-i", "--input", required=True, help=f"input diretory with fastq")
+            parser.add_argument("-k", "--kmer", type=int, default=21, help=f"k-mer size (bp)")
+            parser.add_argument("-s", type=int, default=1000000, help=f"sketch size")
+            parser.add_argument("-m", "--cov", type=int, default=5, help="minimum depth")
+            parser.add_argument("-p", "--processes", type=int, default=4, help=f"CPU number")
+            parser.add_argument("-o", "--output", default="mash_out", help=f"output prefix")
+            try:
+                # 使用parse_known_args来忽略未知参数
+                mash_args, _ = parser.parse_known_args(args_list)
+                return execute_mash_analysis(mash_args)
+            except Exception as e:
+                print(f"Mash error in: {str(e)}", file=sys.stderr)
+                sys.exit(1)
+
+        elif module_name == "merge_bam":
+            from script.merge_bam import BAMMerger
+            from script import merge_bam
+            import time
+            import datetime
+            start_time=time.time()
+            parser = argparse.ArgumentParser(description="this is a python script used to merge bam files")
+            parser.add_argument('input_folder_or_files',nargs='+', help='input a folder containing BAM files or bam files')
+            parser.add_argument('gff_file', help='Input GFF file')
+            parser.add_argument('-r','--interval' , type=int, default=5000, help='default=5000 provide a number as the distance to split non gene region ')
+            parser.add_argument('-o', '--output_dir', default='output', help='Output directory')
+            parser.add_argument('-s','--sort_and_index',action='store_true',help='Whether to sort and index Bam files')
+            parser.add_argument('-t','--cpu' , type=int, default=4, help='default=4 The number of CPUs used during code execution')
+            parser.add_argument('-m','--max_intron_length',type=int,default=100000,help='default=100kb,Filter reads containing abnormal intron length')
+            args,_ = parser.parse_known_args(args_list)
+            print(args.input_folder_or_files)
+            bam_file_paths=merge_bam.get_bam_file(args.input_folder_or_files,2)
+            print(bam_file_paths)
+            merge=BAMMerger()
+            os.makedirs(args.output_dir, exist_ok=True)
+            current_time = datetime.datetime.now()
+            print("current_time:", current_time)
+            print(f"{args.cpu} cpus are used")
+            if args.sort_and_index:
+                print("Sorting and indexing BAM files in parallel")
+                merge.parallel_sort_and_index_bamfiles(bam_file_paths, args.output_dir, args.cpu)
+                bam_file_paths = glob.glob(args.output_dir + "/*bam")
+                print("sorting and indexing complete")
+                current_time = datetime.datetime.now()
+                print("current_time:", current_time)
+
+            chr_len=merge.get_chrom_lengths(bam_file_paths[0])            
+            gene_region_list,unsort_all_region_list=merge.split_gff_to_bed(args.gff_file,chr_len,args.interval,args.output_dir)
+            all_region_list=sorted(unsort_all_region_list,key=lambda x: (x[0], x[1]))
+            store_set=set()
+            for tuple in gene_region_list:
+                store_set.add(tuple[0])
+            for chr_name in chr_len.keys():
+                if chr_name not in store_set:
+                    print(f"warning, {chr_name} cannot be found in the gff file,this chromosome will not be split region")
+            print("split region succssfully")
+
+            big_dict=merge.store_bam_region_coverage_parallel(bam_file_paths,all_region_list)
+
+            merge.merge_regions_to_bam(bam_file_paths,big_dict,os.path.join(args.output_dir,"merged_region.txt"),
+                                all_region_list,args.output_dir, args.max_intron_length)
+
+            ###进行最后排序和建索引
+            print("Start sorting and indexing the merged bam files")
+
+            merge.sort_and_index_merged_bam(os.path.join(args.output_dir, "merged.bam"),
+                                        os.path.join(args.output_dir,"merged_sorted.bam"),
+                                        os.path.join(args.output_dir,"merged_sorted.bam.bai"))
+            print("Complete sorting and indexing ")
+            ###建立索引和排序好后删除merged.bam
+            # try:
+            #     os.remove(os.path.join(args.output_dir, "merged.bam"))
+            #     print("merged.bam deleted")
+            # except FileNotFoundError:
+            #     print("file not exist")
+            # except Exception as e:
+            #     print(f"An error occurred while deleting the file：{e}")
+            end_time = time.time()
+            duration = end_time - start_time
+            print(f"scipt runtime {duration} seconds")
+            current_time = datetime.datetime.now()
+            print("current_time:", current_time)
+            
+        elif module_name == "switchStar_SJ":
+            from script.switchStar_SJ import convert_bed 
+            try:
+                inputfile=args_list[0]
+                outputfile=args_list[1]
+                convert_bed(inputfile,outputfile)
+            except Exception as e:
+                print("Usage: python convert_bed.py input.bed output.bed")
+                sys.exit(1)
+        
+        elif module_name == "swtichRegtools_SJ":
+            from script.swtichRegtools_SJ import convert_bed 
+            try:
+                inputfile=args_list[0]
+                outputfile=args_list[1]
+                convert_bed(inputfile,outputfile)
+            except Exception as e:
+                print("Usage: python convert_bed.py input.bed output.bed")
+                sys.exit(1)
+        else:
+            """动态加载并执行指定的工具模块"""
+            # 构建完整的脚本路径
+            script_path = os.path.join(self.script_dir, f"{module_name}.py")
+                
+            if not os.path.exists(script_path):
+                raise FileNotFoundError(f"scirpt {module_name}.py cannot found in {self.script_dir} ")
+                
+            # 加载模块
+            spec = importlib.util.spec_from_file_location(module_name, script_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+                
+            # 确保有main函数
+            if not hasattr(module, 'main'):
+                raise AttributeError(f"Tool module '{module_name}' has no 'main' function")
+                
+            # 执行工具的主函数并传递参数
+            print(f"\nExecuting tool: {module_name}")
+            print("-"*60)
+            import subprocess
+            #print(args_list)
+            module.main(args_list)
+        
+        
+
+def main():
+    qualifier = GSAeval()
+    
+    # 修改：禁用默认的 -h 行为
+    parser = argparse.ArgumentParser(
+        description="Genomics Sequence Analysis GSAeval",
+        usage="python GSAeval.py <tool_name>",
+        add_help=False  # 禁用自动 -h
+    )
+    
+    parser.add_argument('tool', nargs='?', help='Tool name')
+    parser.add_argument('-v', '--version', action='store_true', help='Show version')
+    #parser.add_argument('-h', '--help', action='store_true', help='Show full help')
+    
+
+    # 必须先解析已知参数
+    args, unknown = parser.parse_known_args()
+
+    if args.version:
+        print(f"GSAeval version {qualifier.version}")
+        return
+        
+    if not args.tool:
+        qualifier.list_tools()
+        return
+
+        
+    # 处理工具调用
+    if args.tool in qualifier.tools:
+        module_name=qualifier.tools[args.tool]['function']  
+        qualifier.run_tool(module_name,unknown)
+        
+    else:
+        print(f"Error: Unknown tool '{args.tool}'", file=sys.stderr)
+        qualifier.list_tools()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

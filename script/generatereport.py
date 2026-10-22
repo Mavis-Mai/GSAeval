@@ -19,7 +19,7 @@ def safe_copy_dir(src_dir: str, dst_dir: str, overwrite=False):
     if not dst.exists():
         shutil.copytree(src, dst)
     else:
-        print(f"⏩ 跳过已存在目录: {dst}")
+        print(f"⏩ Skipping existing directory: {dst}")
 
 
 def copypict(pattern,outputfile,templatedir="part04Template.md"):
@@ -28,9 +28,9 @@ def copypict(pattern,outputfile,templatedir="part04Template.md"):
     source_file = glob.glob(pattern)[0]
     if os.path.exists(source_file):
         shutil.copy(source_file, os.path.join(target_dir,outputfile))
-        print("文件已成功移动到 _v_images 目录")
+        print("Files successfully moved to the _v_images directory")
     else:
-        print(f"错误：源文件 {source_file} 不存在")
+        print(f"Error: Source file {source_file} does not exist")
 
 def update_csq(template_path: str, 
               new_table_data: List[Tuple[str, int, float]], 
@@ -71,7 +71,7 @@ def update_csq(template_path: str,
     )
     
     if not table_pattern.search(content):
-        raise ValueError("文档中未找到CSQ表格，请检查模板格式")
+        raise ValueError("No CSQ table found in the document. Check the template format")
     
     # 3. 精准替换（保留前后的内容）
     new_content = table_pattern.sub(r'\1' + new_table_md, content)
@@ -80,11 +80,11 @@ def update_csq(template_path: str,
     with open(save_to, 'w', encoding='utf-8') as f:
         f.write(new_content)
     
-    print(f"✔ 表格已精准更新: {save_to}")
+    print(f"✔ Table updated: {save_to}")
 
 def generate_report_tables(CSQ2spdf, output_file=None):
     if not output_file:
-        print("未指定 output_file")
+        print("output_file was not specified")
         return
 
     # 按CSQ降序排序，取前10个高CSQ得分基因
@@ -126,7 +126,7 @@ def generate_report_tables(CSQ2spdf, output_file=None):
         with open(output_file, 'r', encoding='utf-8') as f:
             content = f.read()
     except FileNotFoundError:
-        print(f"❌ 找不到文件: {output_file}")
+        print(f"❌ File not found: {output_file}")
         return
 
     # 定义你的定位说明文字（确保和 Markdown 模板里的文字完全一致）
@@ -147,7 +147,7 @@ def generate_report_tables(CSQ2spdf, output_file=None):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(content)
 
-    print(f"✔ 表格已精准更新: {output_file}")
+    print(f"✔ Table updated: {output_file}")
 
 def count_lines(filepath):
     """快速计数文件行数（不加载内容）"""
@@ -170,9 +170,9 @@ def replaceKeywordNumber(num,keyward, template_path):
         with open(template_path, 'w', encoding='utf-8') as f:
             f.write(new_content)
         
-        print(f"✔ 成功将{keyward}数量更新为: {num}")
+        print(f"✔ Successfully updated {keyward} count to: {num}")
     else:
-        print(f"⚠️ 警告：在 {template_path} 中未找到 '* {keyward}:[数字]' 的文本，未做任何修改。")
+        print(f"⚠️ Warning: In {template_path}, no text matching '* {keyward}:[number]' was found; no changes made.")
 
 
 def replace_markdown_table(table_data, keyword, template_path):
@@ -198,7 +198,7 @@ def replace_markdown_table(table_data, keyword, template_path):
     # 检查是否匹配到指定的表格内容
     match = table_pattern.search(content)
     if not match:
-        raise ValueError(f"❌ 未找到关键字 '{keyword}' 对应的表格区域，请检查模板文件内容是否正确")
+        raise ValueError(f"❌ No table section found for keyword '{keyword}'. Check the template file contents")
 
     #print(f"✔ 找到匹配的行: {match.group()}")  # 打印找到的部分
 
@@ -239,12 +239,12 @@ def merge_report():
             
             # 判断目标目录是否存在
             if target_dir.is_dir():
-                print(f"处理目录: {target_dir}")
+                print(f"Processing directory: {target_dir}")
                 
                 # 1. 查找并合并所有的 .md 文件 (这里会自动找到 Template.md 等文件)
                 for md_file in target_dir.glob("*.md"):
                     if md_file.is_file():
-                        print(f"  -> 合并文件: {md_file.name}")
+                        print(f"  -> Merging file: {md_file.name}")
                         with open(md_file, "r", encoding="utf-8") as f_in:
                             content = f_in.read()
                             f_out.write(content)
@@ -254,18 +254,18 @@ def merge_report():
                 # 2. 拷贝 _v_images 目录内的所有图片
                 img_dir = target_dir / "_v_images"
                 if img_dir.is_dir():
-                    print(f"  -> 拷贝图片: 从 {img_dir} 到 {out_img}")
+                    print(f"  -> Copying images: from {img_dir} to {out_img}")
                     for img_file in img_dir.iterdir():
                         if img_file.is_file(): 
                             shutil.copy2(img_file, out_img)
                 else:
-                    print(f"  -> 未找到图片目录: {img_dir}") # 增加一条日志，方便调试
+                    print(f"  -> Image directory not found: {img_dir}") # 增加一条日志，方便调试
             else:
-                print(f"跳过: {target_dir} 不存在")
+                print(f"Skipping: {target_dir} does not exist")
     print("-" * 40)
-    print("合并完成！")
-    print(f"最终报告目录: {out_dir}")
-    print(f"合并的 Markdown: {out_md}")
+    print("Merge complete!")
+    print(f"Final report directory: {out_dir}")
+    print(f"Merged Markdown: {out_md}")
 
 # 测试运行
 def main(args_list):

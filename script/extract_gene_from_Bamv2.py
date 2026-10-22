@@ -10,7 +10,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 # 检查是否导入成功，如果没有则显示帮助信息
 try:
     import overlap_resolver
-    from ncRNAfilter_cpc import *
     from build_junction_lib_v5 import gff3_to_gtf
     from gtf_gff_orf_predict import *
 except ImportError as e:
@@ -78,9 +77,9 @@ def run_stringtie(bam_file, gff3, output_gtf, threads, genome_fasta, output_pref
     if os.path.exists(output_gtf) and not isforce:
         print(f"{output_gtf} have already generated, skip stringtie process")
         pass
-    elif os.path.exists(f'Running_dir/{output_gtf}') and not isforce:
-        print(f"Running_dir/{output_gtf} have already generated, skip stringtie process")
-        output_gtf=f"Running_dir/{output_gtf}"
+    elif os.path.exists(f'Quality_info/{output_gtf}') and not isforce:
+        print(f"Quality_info/{output_gtf} have already generated, skip stringtie process")
+        output_gtf=f"Quality_info/{output_gtf}"
         pass
     else:
         try:
@@ -184,7 +183,7 @@ def main(args_list=None):
     parser.add_argument("-o","--output", default="output",help="Output prefix for files (will add extensions)")
     parser.add_argument("-t","--threads", default=5,type=int, help="Number of threads to use for processing")
     parser.add_argument("-f","--fasta",  help="gene assembly (fasta).")
-    parser.add_argument("--force", default=False,action='store_true', help="Disable ncRNA filtering (default: filter ncRNA)")
+    parser.add_argument("--force", default=False,action='store_true', help="")
     #args = parser.parse_args(args_list) if args_list else parser.parse_args()
     #args, _ = parser.parse_known_args(args_list) if args_list else parser.parse_args()
     if args_list:
@@ -206,9 +205,9 @@ def main(args_list=None):
     if os.path.exists(output_gff) and not args.force:
         print(f"{output_gff} have already generated, skip stringtie process")
         pass
-    elif os.path.exists(f'Running_dir/{output_gff}') and not args.force:
+    elif os.path.exists(f'Quality_info/{output_gff}') and not args.force:
         print(f"{output_gff} have already generated, skip stringtie process")
-        output_gff=f"Running_dir/{output_gff}"
+        output_gff=f"Quality_info/{output_gff}"
         pass
     else:
         #tmpgtf= f"{args.output}_orf.gff" 

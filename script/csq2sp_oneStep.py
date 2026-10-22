@@ -9,18 +9,49 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import shutil
 import glob
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).parent))
 try:
     from build_junction_lib_v5 import *
     from loaddata import *
-    from qscs_calculationv2 import *
-    from qscs_oneStep import *
+    from csq_calculation import *
+    from csq_oneStep import *
     from generatereport import *
 except ImportError as e:
-    print(f"Error: 必需的模块 overlap_resolver 未找到。请确保它在脚本所在目录的父目录中。")
-    print(f"错误详情: {e}")
+    print(f"Error: Required module overlap_resolver was not found. Ensure it is in the parent directory of the script directory.")
+    print(f"Error details: {e}")
     sys.exit(1)
+
+def single_diamond_blast(seq_q, seq_r, threads, k=2):
+    """Return each query's best forward hit, preserving complete gene IDs."""
+    diamond_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diamond")
+    print("Commencing one-way comparison (Query -> Reference)...")
+    with tempfile.TemporaryDirectory(prefix="diamond_single_") as tmp_dir:
+        database = os.path.join(tmp_dir, "ref.dmnd")
+        output = os.path.join(tmp_dir, "q2r.tsv")
+        subprocess.run(
+            [diamond_path, "makedb", "--in", os.path.abspath(seq_r),
+             "--db", database, "--quiet"], check=True)
+        subprocess.run(
+            [diamond_path, "blastp", "--db", database,
+             "--query", os.path.abspath(seq_q), "--threads", str(threads),
+             "--outfmt", "6", "qseqid", "sseqid", "bitscore",
+             "-o", output, "-k", str(k), "--evalue", "1e-5", "--quiet"],
+            check=True)
+        best_hits = {}
+        with open(output) as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                query, reference, score = line.rstrip().split("\t")
+                score = float(score)
+                if query not in best_hits or score > best_hits[query][1]:
+                    best_hits[query] = (reference, score)
+    return pd.DataFrame(
+        [(query, reference, score) for query, (reference, score) in best_hits.items()],
+        columns=["Gene_Q", "Gene_R", "Bitscore_Q2R"])
+
 
 def reciprocal_diamond_blast(seq_q, seq_r, threads, k=1,  program="blastp", out_tsv="reciprocal_pairs.tsv"):
     """
@@ -80,7 +111,7 @@ def reciprocal_diamond_blast(seq_q, seq_r, threads, k=1,  program="blastp", out_
             for line in f:
                 parts = line.strip().split('\t')
                 q_id, s_id = parts[0], parts[1]
-                bitscore = float(parts[4])
+                bitscore = float(parts[11])
                 
                 # 如果这个基因还没被记录，或者遇到了更高的分数，则更新
                 if q_id not in best_hits or bitscore > best_hits[q_id][1]:
@@ -106,8 +137,8 @@ def reciprocal_diamond_blast(seq_q, seq_r, threads, k=1,  program="blastp", out_
         for pair in reciprocal_pairs:
             f.write(f"{pair[0]}\t{pair[1]}\t{pair[2]}\t{pair[3]}\n")
             
-    print(f"完成！共找到 {len(reciprocal_pairs)} 对互惠基因。")
-    print(f"结果已保存至: {out_tsv}")
+    print(f"Done! A total {len(reciprocal_pairs)} reciprocal gene pairs were identified.")
+    print(f"The results have been saved to: {out_tsv}")
     
     # 清理临时文件
     for tmp_file in [f"{db_r}.dmnd", f"{db_q}.dmnd", out_q2r, out_r2q]:
@@ -118,7 +149,7 @@ def reciprocal_diamond_blast(seq_q, seq_r, threads, k=1,  program="blastp", out_
 
     return df
 
-def qscs_calculation2db(a_data,b_data,genelist,output):
+def csq_calculation2db(a_data,b_data,genelist,output,type):
     results = []
     ouput_withoutIntron=open(f"gene_withoutIntron.txt",'w+')
     #print(genelist)
@@ -132,7 +163,7 @@ def qscs_calculation2db(a_data,b_data,genelist,output):
             if gene_2 not in b_data:
                 ouput_withoutIntron.write(f'{gene_2}\n')
                 continue
-            score= calc_qscs(a_data[gene1],b_data[gene_2])
+            score= calc_csq(a_data[gene1],b_data[gene_2],type)
             results.append({
                 'GeneA': gene1,
                 'GeneB': gene_2,
@@ -179,10 +210,18 @@ def main(args_list=None):
     parser.add_argument('-g', '--query_gtf', required=True, help='Input query GTF annotation file (required)')
     parser.add_argument('-F', '--ref_fasta', required=True, help='Input reference genome FASTA file (required)')
     parser.add_argument('-G', '--ref_gtf', required=True, help='Input reference GTF annotation file (required)')
+    parser.add_argument('-w', '--weight_type', required=True, help='Based on the species input, select plant or animal weight coefficients to calculate CSQ.[plant or animal]]  (required)')
     parser.add_argument('-l', '--genepairs', help='Provide high-confidence gene pair information; \n\
-                        If this file is not provided,  reciprocal alignment of diamond will be used to map gene pairs')             
+                        If omitted, DIAMOND maps gene pairs using the selected alignment mode')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--reciprocal', dest='reciprocal', action='store_true',
+                       help='Enable reciprocal best-hit DIAMOND alignment (default)')
+    group.add_argument('--no-reciprocal', dest='reciprocal', action='store_false',
+                       help='Use one-way DIAMOND alignment')
+    parser.set_defaults(reciprocal=True)
     parser.add_argument('-k', '---max-target-seqs', default=2, help='hit the number of Diamonds')
     parser.add_argument('-d', '--type', default="CDS", help='mode:CDS or exon.')
+
     parser.add_argument('-t', '--threads', default=8, help='cpu number')
     parser.add_argument('--report', action="store_true",  default=False, help='Whether to generate report(.md)' )
     parser.add_argument('-o', '--output', default='output', help='output prefix')
@@ -203,14 +242,19 @@ def main(args_list=None):
     if args.genepairs == None:
         queryfile=getProt(db_query,"query",False)
         reffile=getProt(db_ref,"ref",False)
-        genepairs=reciprocal_diamond_blast(queryfile,reffile,args.threads)
+        if args.reciprocal:
+            genepairs=reciprocal_diamond_blast(queryfile,reffile,args.threads)
+        else:
+            genepairs=single_diamond_blast(queryfile,reffile,args.threads)
+        pairsnum=len(genepairs)
         print(genepairs)
-        qCSStsvfile=qscs_calculation2db(db_query,db_ref,genepairs,args.output)
+        qCSStsvfile=csq_calculation2db(db_query,db_ref,genepairs,args.output,args.weight_type)
         drawdenstiy(qCSStsvfile)
     else:
         genelist=read_table(args.genepairs)
+        pairsnum=len(genelist)
         print(genelist)
-        qCSStsvfile=qscs_calculation2db(db_query,db_ref,genelist,args.output)
+        qCSStsvfile=csq_calculation2db(db_query,db_ref,genelist,args.output,args.weight_type)
         drawdenstiy(qCSStsvfile)
 
     #summarize(qCSStsvfile,threshold_table,args.output)
@@ -232,10 +276,7 @@ def main(args_list=None):
         generate_report_tables(CSQ2spdf,reportfile)
 
 
-        pattern = os.path.join(current_dir, "reciprocal_pairs.tsv")
-        paristsv=glob.glob(pattern)[0]
-        pairsnum=count_lines(paristsv)-1
-        replaceKeywordNumber(pairsnum,"同源基因对数量为", reportfile)
+        replaceKeywordNumber(pairsnum,"Number of homologous gene pairs: ", reportfile)
         
         #除了CSQ-template.md其他报告模板都删了
         dir_path = Path("Template.md")

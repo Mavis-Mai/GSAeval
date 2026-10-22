@@ -482,7 +482,7 @@ class BedAnalyzer:
             plt.savefig(f"Gene_{self.output_prefix}_venn.png", dpi=300, bbox_inches='tight')
             
         except Exception as e:
-            print(f"绘制韦恩图时出错: {str(e)}")
+            print(f"Error plotting Venn diagram: {str(e)}")
         finally:
             plt.close()
 
@@ -522,8 +522,8 @@ def main(args_list=None):
     import argparse
     parser = argparse.ArgumentParser(description="Compare RNA-seq splicing sites with gene regions", 
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-r","--rnaseqbed", help="RNA-seq BED文件(Chr start end strand coverage)")
-    parser.add_argument("-g","--genebed", help="Gene BED文件(Chr start end geneID)")
+    parser.add_argument("-r","--rnaseqbed", help="RNA-seq BED file (Chr start end strand coverage)")
+    parser.add_argument("-g","--genebed", help="Gene BED file (Chr start end geneID)")
     parser.add_argument("-o", "--output", default="bed_comparison",
                        help="output prefiex")
     parser.add_argument("-m", "--min_overlap", type=float, default=0.5,

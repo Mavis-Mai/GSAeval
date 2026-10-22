@@ -29,7 +29,7 @@ def predict_and_write_orfs(
     
     def parse_fasta_to_dict(fasta_path: str) -> Dict[str, str]:
         if not os.path.exists(fasta_path):
-            raise FileNotFoundError(f"FASTA 文件不存在: {fasta_path}")
+            raise FileNotFoundError(f"FASTA file does not exist: {fasta_path}")
 
         genome_dict = {}
         current_chr = None
@@ -58,7 +58,7 @@ def predict_and_write_orfs(
             genome_dict[current_chr] = ''.join(current_seq).upper()
 
         if not genome_dict:
-            raise ValueError("FASTA 文件中未找到有效序列")
+            raise ValueError("No valid sequences found in the FASTA file")
         return genome_dict
 
     # ---------- GTF attrs ----------

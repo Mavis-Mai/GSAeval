@@ -34,4 +34,4 @@ if __name__ == "__main__":
         sys.exit(1)
     
     convert_bed(sys.argv[1], sys.argv[2])
-    print(f"转换完成！已保存至 {sys.argv[2]}")
+    print(f"Conversion complete! Saved to {sys.argv[2]}")

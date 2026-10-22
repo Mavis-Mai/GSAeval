@@ -1,5 +1,5 @@
 ## <font style="color:rgb(0, 0, 0);"> Instructions </font>
-**<font style="color:rgb(0, 0, 0);">GSAqualifier comprises three core analysis modes:</font>**
+**<font style="color:rgb(0, 0, 0);">GSAeval comprises three core analysis modes:</font>**
 
 <font style="color:rgb(0, 0, 0);">1) CSQ Quick Detection Mode; </font>
 
@@ -18,28 +18,25 @@
 
 
 ## <font style="color:rgb(0, 0, 0);"> Installation </font>
-### conda
-```shell
-mamba create -n test_gsaqualifier -c bioconda  mavismai::gsaqualifier
-```
-
 ### github
 ```shell
 #Install Dependencies
-mamba  create -n GSAqualifier -c conda-forge  python=3.10.5 
-conda activate GSAqualifier
+mamba  create -n GSAeval -c conda-forge  python=3.10.5 
+conda activate GSAeval
 
 mamba  install  -c bioconda  stringtie  mash  regtools gffread
-pip install -r requirements.txt
 ```
 
 ```shell
-#Download scripts
-git clone  https://github.com/Mavis-Mai/GSAqualifier.git
-
-#Download Database
-wget --no-check-certificate https://github.com/Mavis-Mai/GSAqualifier/releases/download/v1.0.0/GSAqualifier_Dataset_v1.0.tar.gz
-tar -xzf GSAqualifier_Dataset_v1.0.tar.gz
+# Download code and the datasets tracked with Git LFS
+# Install Git LFS first: https://git-lfs.com/
+git lfs install
+git clone https://github.com/Mavis-Mai/GSAeval.git
+cd GSAeval
+git lfs pull
+chmod +x GSAeval
+export PATH="$PWD:$PATH"
+pip install -r requirements.txt
 ```
 
 
@@ -60,7 +57,7 @@ This mode is specifically designed for the rapid evaluation of splice site accur
 
 ### Quick Start Guide</font>
 ```bash
-GSAqualifier csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
+GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
 ```
 
 ### Parameter Description
@@ -96,7 +93,7 @@ This model conducts a detailed and comprehensive analysis of the similarity of e
 
 ### Quick Start Guide：
 ```bash
-GSAqualifier csq2sp -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -F Arabidopsis_thaliana.genome.fna -G Arabidopsis_thaliana.genome.gff3 
+GSAeval csq2sp -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -F Arabidopsis_thaliana.genome.fna -G Arabidopsis_thaliana.genome.gff3 
 -w plant 
 ```
 
@@ -130,7 +127,7 @@ This model comprehensively evaluates and analyzes the splicing status of each ex
 
 ### Quick Start Guide
 ```bash
-GSAqualifier tran -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b bamfile/ -t 10
+GSAeval tran -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b bamfile/ -t 10
 ```
 ### Parameter Description：
 | Parameter | Description |

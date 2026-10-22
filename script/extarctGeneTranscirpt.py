@@ -79,20 +79,20 @@ def extract_mappings(gxf_file, output_prefix, transcript_pattern=None, gene_patt
 def main():
     """命令行界面"""
     parser = argparse.ArgumentParser(
-        description='从GFF/GTF文件提取transcript-to-GeneID映射关系',
+        description='Extract transcript-to-GeneID mappings from a GFF/GTF file',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
-    parser.add_argument('input', help='输入GFF/GTF文件')
+    parser.add_argument('input', help='Input GFF/GTF file')
     parser.add_argument('-o', '--output', default='transcript_gene',
-                       help='输出文件前缀(不包含扩展名)')
+                       help='Output file prefix (without extension)')
     parser.add_argument('--transcript_pattern', default=None,
-                       help='自定义转录本ID提取模式(正则表达式)')
+                       help='Custom transcript ID extraction pattern (regular expression)')
     parser.add_argument('--gene_pattern', default=None,
-                       help='自定义基因ID提取模式(正则表达式)')
+                       help='Custom gene ID extraction pattern (regular expression)')
     
     args = parser.parse_args()
     
-    print(f"\n从 {args.input} 提取转录本-基因映射关系...")
+    print(f"\nFrom {args.input}, extracting transcript-to-gene mappings...")
     
     # 编译正则表达式
     transcript_re = re.compile(args.transcript_pattern) if args.transcript_pattern else None
@@ -107,14 +107,14 @@ def main():
     )
     
     # 打印摘要信息
-    print("\n处理完成! 结果摘要:")
-    print(f"- 共找到 {stats['total_transcripts']} 个转录本")
-    print(f"- 其中 {stats['transcripts_with_gene']} 个有基因ID映射")
-    print(f"- 输出文件已保存为: {args.output}_transcript_gene_mapping.tsv")
-    print(f"- 统计信息保存在: {args.output}_mapping_stats.txt")
+    print("\nProcessing complete! Summary:")
+    print(f"- Found {stats['total_transcripts']} transcripts")
+    print(f"- Of these, {stats['transcripts_with_gene']} have gene ID mappings")
+    print(f"- Output file saved as: {args.output}_transcript_gene_mapping.tsv")
+    print(f"- Statistics saved to: {args.output}_mapping_stats.txt")
     
     # 显示前几行
-    print("\n输出文件前5行:")
+    print("\nFirst 5 lines of the output file:")
     print(df.head())
 
 

@@ -1,41 +1,44 @@
 package:
-  name: gsaqulifier      # 包的名称（必须全小写）
+  name: gsaeval      # 包的名称（必须全小写）
   version: "1.0.0"      # 包的版本号
 
 source:
-  # 源码的来源，可以是 URL (tar.gz), git 仓库，或者本地路径 (path: ../src)
-  #url: https://github.com/username/my_package/archive/v1.0.0.tar.gz
-  # 建议加上 SHA256 校验和确保安全
+  path: .
 
 build:
   number: 0             # 构建号，如果版本没变但重新打包，将此数字加 1
   # script: "{{ PYTHON }} -m pip install . -vv" # 如果是极简 Python 包，可以直接在这里写安装命令，无需 build.sh
 
 requirements:
-  build:                # 编译时需要的工具（如编译器）
-    - {{ compiler('c') }} # 如果包含 C 扩展
-    - {{ compiler('cxx') }} 
   host:                 # 编译环境依赖（指定架构相关的依赖，如 Python）
-    - python 3.10.5 
+    - python >=3.10
     - pip
-    - setuptools
   run:                  # 运行时依赖（用户安装此包时会被自动下载的依赖）
-    - python
-    - numpy
-    - pandas
-    - bioconda
+    - python >=3.10
+    - numpy ==1.22
+    - pandas ==2.0.3
     - stringtie
     - mash
     - regtools
     - gffread
-
+    - intervaltree>=3.1.0,<4.0.0
+    - matplotlib==3.7.1
+    - matplotlib-venn==1.1.2
+    - pybedtools==0.12.0
+    - pysam==0.19.1
+    - scipy==1.8.0
+    - seaborn==0.13.2
+    - tabulate==0.9.0
+    - pathlib==1.0.1
+    - biopython==1.79
+    - gffutils==0.11.0
 test:
   imports:
-    - GSAQualifier        # 测试安装后是否能成功 import
-  # commands:
-  #   - my_package --help # 也可以添加命令行测试
+    - GSAeval        # 测试安装后是否能成功 import
+  commands:
+    - GSAeval --help # 也可以添加命令行测试
 
 about:
-  home: https://github.com/username/my_package
+  home: https://github.com/Mavis-Mai/GSAeval
   license: MIT
-  summary: "GSAqualifier: A novel algorithm/toolkit assessing genome annotation accuracy through splice junction pattern analysis"
+  summary: "GSAeval: A novel algorithm/toolkit assessing genome annotation accuracy through splice junction pattern analysis"

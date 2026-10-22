@@ -1,0 +1,2 @@
+scope	pairs_n	bootstrap_units_n	full_auc	full_mean_gap	combination	full_auc_ci_low	full_auc_ci_high	full_mean_gap_ci_low	full_mean_gap_ci_high
+all_pairs	206	206	0.9587142991799416	0.24300291262135923	equal_weight_mean_of_five	0.9412394547082665	0.9744562399849184	0.21997497572815536	0.26823652912621365

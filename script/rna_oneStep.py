@@ -32,15 +32,10 @@ def parse_args(args_list=None):
     #parser.add_argument("-s",'--RNAseqSJ', required=True, help='Splice site information in the transcriptome (bed) ')
     parser.add_argument("-o", "--output", default="output", help="output prefiex")
     parser.add_argument("--force", default=False,action='store_true', help="Force regenerate the result (overwrite the existing file)")
-    parser.add_argument("--ncRNA_filter",default=True,action='store_false', help="Filter the ncRNA transcript. Requires supplementary genome sequences (--fasta).")
     parser.add_argument("-f","--fasta",  help="gene assembly (fasta).")
     parser.add_argument("-m", "--min_overlap", type=float, default=0.5, help="Minimum overlap ratio (0-1)")
     parser.add_argument('-c', '--min_support', type=int, default=5,
                                 help='The minimum number threshold of supported read segments (default: %(default)s)')
-    parser.add_argument('-d', '--max_good', type=int, default=200,
-                                help='maximum distance threshold for "1-Good" (default: %(default)s bp)')
-    parser.add_argument('-D', '--max_moderate', type=int, default=500,
-                                help='maximum distance threshold for "2-Moderate" (default: %(default)s bp)')
     parser.add_argument('-t', '--threads', type=int, default=8,
                                 help=f'Number of parallel threads (default:8 CPUs)')
     parser.add_argument('--item', default="", help='extract exon information from item. with --gxfform')
@@ -142,21 +137,21 @@ class one_step:
             gxf_index = args_list.index("-g")
         args_list[gxf_index + 1] = outputgtf
 
-        os.makedirs("Running_dir", exist_ok=True) 
-        bamfile=self.merge_bam(args.bam_floder_file,args.gxf,args.threads,"Running_dir",args.force)
+        os.makedirs("Quality_info", exist_ok=True) 
+        bamfile=self.merge_bam(args.bam_floder_file,args.gxf,args.threads,"Quality_info",args.force)
         print(f"bamfile: {bamfile}")
         
-        if os.path.exists("Running_dir/merged_sorted_SJ_regtools.tsv") and not args.force:
+        if os.path.exists("Quality_info/merged_sorted_SJ_regtools.tsv") and not args.force:
             pass
         elif os.path.exists("merged_sorted_SJ_regtools.tsv") and not args.force:
             pass
         else:
-            regtools_cmd=f'regtools junctions extract  {bamfile} -o Running_dir/merged_sorted_SJ_regtools.tsv -a 4  -m 20  -M 20000 -s XS'
+            regtools_cmd=f'regtools junctions extract  {bamfile} -o Quality_info/merged_sorted_SJ_regtools.tsv -a 4  -m 20  -s XS'
             subprocess.run(regtools_cmd, shell=True, check=True)
 
         RNAseqSJ=f"{args.output}.SJfromBam.bed"
         try:
-            convert_bed("Running_dir/merged_sorted_SJ_regtools.tsv", RNAseqSJ)
+            convert_bed("Quality_info/merged_sorted_SJ_regtools.tsv", RNAseqSJ)
         except:
             convert_bed("merged_sorted_SJ_regtools.tsv", RNAseqSJ)
         args_list.append("--bam_file")
@@ -206,22 +201,22 @@ class one_step:
 
         for file_path in glob.glob(f"{args.output}*"):
             if os.path.isfile(file_path):
-                shutil.move(file_path, os.path.join("Running_dir", os.path.basename(file_path)))
+                shutil.move(file_path, os.path.join("Quality_info", os.path.basename(file_path)))
 
         ##计算基因的cds比例？
         df_cds_ratio=parse_cds_coords(args.gxf)
-        df_cds_ratio.to_csv(f"Running_dir/{args.output}_cds_ratio.txt",sep="\t",index=False)
+        df_cds_ratio.to_csv(f"Quality_info/{args.output}_cds_ratio.txt",sep="\t",index=False)
         ##计算基因间的aed
         compute_aed_for_overlapping_pairs(outputgtf, 
-                    f"Running_dir/{args.output}_orf.gff", 
-                    f"Running_dir/{args.output}.AED.txt",
+                    f"Quality_info/{args.output}_orf.gff", 
+                    f"Quality_info/{args.output}.CDS_distance.txt",
                    )
         mergedf=merge_tables_by_geneid(f"Gene_Region/Gene_{args.output}_detailed_overlap.tsv",
                                        f"Splice_junctions/SJ_{args.output}_detail_comparing.tsv",
-                                       f"Running_dir/{args.output}.AED.txt",
-                                       f"Running_dir/{args.output}_cds_ratio.txt",
+                                       f"Quality_info/{args.output}.CDS_distance.txt",
+                                       f"Quality_info/{args.output}_cds_ratio.txt",
                                        args.gxf,
-                                       f"Running_dir/{args.output}")
+                                       f"Quality_info/{args.output}")
         print(mergedf.head())
 
         mergedf.to_csv("Total_gene_quality.tsv",sep="\t",index=False)
@@ -238,7 +233,7 @@ class one_step:
             pattern = os.path.join(current_dir,  "Splice_junctions", "*_pieplot.png")
             copypict(pattern,"SJlevel.png","Template.md")
 
-            pattern = os.path.join(current_dir,  "Running_dir", "*_riskscore_distribution.png")
+            pattern = os.path.join(current_dir,  "Quality_info", "*_riskscore_distribution.png")
             copypict(pattern,"Riskscore.png","Template.md")
 
             ### 读取RNA-seq generegion的部分信息
@@ -280,7 +275,7 @@ class one_step:
             replace_markdown_table(text,"genes with conflicting splicing junctions (SJ)",template)
 
         ###修改RNA模式输出的内容方便读取
-            pattern = os.path.join(current_dir, "Running_dir", "*_quantiles_statistics.tsv")
+            pattern = os.path.join(current_dir, "Quality_info", "*_quantiles_statistics.tsv")
             quantiles_statistics=glob.glob(pattern)[0]
             quantiledf=pd.read_csv(quantiles_statistics,sep="\t",header=0,index_col=0)
             
@@ -315,29 +310,20 @@ class one_step:
 def main(args_list=None):
     parser = argparse.ArgumentParser(description="Compare the gene regions, junction, TES/TSS between RNA-seq files and annotation", 
                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-g","--gxf", required=True, help="gene anotation (gff/gtf).")
-    parser.add_argument("-b","--bam_floder_file",nargs='+',  required=True, help="A directory with RNA-seq files(bam) or a bam file.")
-    parser.add_argument("-f","--fasta", required=True, help="gene assembly (fasta).")
-    #parser.add_argument("-s",'--RNAseqSJ', required=True, help='Splice site information in the transcriptome (bed) ')
 
+    parser.add_argument("-g","--gxf", required=True, help="gene anotation (gff/gtf).")
+    parser.add_argument("-b","--bam_floder_file", nargs='+',required=True, help="A directory with RNA-seq files(bam).")
+    parser.add_argument("-f","--fasta", required=True, help="gene assembly (fasta).")   
     parser.add_argument("-o", "--output", default="output", help="output prefiex")
     parser.add_argument("--force", default=False,action='store_true', help="Force regenerate the result (overwrite the existing file)")
-    parser.add_argument("--ncRNA_filter",default=True,action='store_false', help="Filter the ncRNA transcript. Requires supplementary genome sequences (--fasta).")
     parser.add_argument("-m", "--min_overlap", type=float, default=0.5, help="Minimum overlap ratio (0-1)")
-
     parser.add_argument('-c', '--min_support', type=int, default=5,
                                 help='The minimum number threshold of supported read segments (default: %(default)s)')
-    parser.add_argument('-d', '--max_good', type=int, default=200,
-                                help='maximum distance threshold for "1-Good" (default: %(default)s bp)')
-    parser.add_argument('-D', '--max_moderate', type=int, default=500,
-                                help='maximum distance threshold for "2-Moderate" (default: %(default)s bp)')
     parser.add_argument('-t', '--threads', type=int, default=8,
                                 help=f'Number of parallel threads (default:8 CPUs)')
-
     parser.add_argument('-r','--recordTyep', default='exon', help='extract junction from feature type')
-    parser.add_argument('--idItem', default="", help='extract gene name from item. with --gxfform')
-    parser.add_argument('-w','--window_size', default=100, help='size(bp) of sliding window')
     parser.add_argument('--item', default="", help='extract exon information from item. with --gxfform')
+    parser.add_argument('--idItem', default="", help='extract gene name from item. with --gxfform')
     parser.add_argument('--report', action="store_true",  default=False, help='Whether to generate report(.md)' )
     args = parser.parse_args(args_list) if args_list else parser.parse_args()
     analyzer = one_step()

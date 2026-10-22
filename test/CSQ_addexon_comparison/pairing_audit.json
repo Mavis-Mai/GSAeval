@@ -1,0 +1,19 @@
+{
+  "before_rows": 211,
+  "after_rows": 208,
+  "pairing_mode": "direct_keys",
+  "keys": [
+    "BUSCO"
+  ],
+  "mapping_level": null,
+  "pair_status_counts": {
+    "paired": 206,
+    "before_only": 5,
+    "after_only": 2
+  },
+  "large_change": 0.1,
+  "tolerance": 1e-09,
+  "reference_changed_pairs": 58,
+  "stable_reference_pairs": 148,
+  "target_id_changed_pairs": 206
+}

@@ -366,7 +366,7 @@ def plot_venn(rnaseq_support,gff_support,overlap,output):
         plt.savefig(f"SJ_{output}_venn.png", dpi=300, bbox_inches='tight')
         
     except Exception as e:
-        print(f"绘制韦恩图时出错: {str(e)}")
+        print(f"Error plotting Venn diagram: {str(e)}")
     finally:
         plt.close()
 
@@ -531,43 +531,43 @@ def merge_sj_intervals(unmatched_sjs, window_size=100):
 def main(args_list=None):
     parser = argparse.ArgumentParser(
         description='''
-        通过剪接位点判断基因区间是否注释良好
+        Assess gene annotation quality using splice junctions
         --------------------------
         ''',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
-    使用示例:
-    # 基本用法(使用默认参数):
+    Usage examples:
+    # Basic usage (with default arguments):
     %(prog)s --genebed gene.bed --geneSJ geneSJ.bed --RNAseqSJ RNAseqSJ.bed  -o output
 
-    # 输出格式:
-    生成两个文件: {output_prefix}.geneCheck.tsv 和 {output_prefix}.unmatched_RNAseqSJ.tsv
+    # Output format:
+    Generates two files: {output_prefix}.geneCheck.tsv and {output_prefix}.unmatched_RNAseqSJ.tsv
             '''
     )
 
     # 必需参数
-    required = parser.add_argument_group('必需参数')
+    required = parser.add_argument_group('Required arguments')
     required.add_argument('--genebed',
                         required=True,
                         metavar='FILE',
-                        help='基因注释文件(BED格式)')
+                        help='Gene annotation file (BED format)')
     required.add_argument('--geneSJ',
                         required=True,
                         metavar='FILE',
-                        help='基因剪接位点信息（BED格式）')
+                        help='Gene splice junction information (BED format)')
     required.add_argument("-s",'--RNAseqSJ',
                         required=True,
                         metavar='FILE',
-                        help='转录组的剪接位点信息（BED格式）')
+                        help='Transcriptome splice junction information (BED format)')
 
-    optional = parser.add_argument_group('可选参数')
+    optional = parser.add_argument_group('Optional arguments')
     required.add_argument('-o','--output',
                         default='output',
                         metavar='PREFIX',
-                        help='输出的文件前缀，默认output')
+                        help='Output file prefix (default: output)')
     required.add_argument('-w','--window_size',
                         default=100,
-                        help='滑窗大小，默认100')
+                        help='Sliding window size (default: 100)')
                         
     
 
@@ -620,7 +620,7 @@ def main(args_list=None):
         tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
         error_details = "".join(tb_lines)
         
-        print(f"\n❌ 错误详细信息:\n{error_details}", file=sys.stderr)
+        print(f"\n❌ Error details:\n{error_details}", file=sys.stderr)
         sys.exit(1)    
         #print(f"\n❌ 错误: {str(e)}", file=sys.stderr)
         #sys.exit(1)

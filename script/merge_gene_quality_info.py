@@ -260,7 +260,7 @@ def merge_tables_by_geneid(
         stats_df = pd.DataFrame(stats_data)
         stats_file_path = f"{output_path}_quantiles_statistics.tsv"
         stats_df.to_csv(stats_file_path, sep='\t', index=False)
-        print(f"各项指标的分位数统计信息已成功记录并保存至: {stats_file_path}")
+        print(f"Quantile statistics for all metrics recorded and saved to: {stats_file_path}")
         print(stats_df)
 
     return filtered_df

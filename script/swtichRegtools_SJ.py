@@ -42,4 +42,4 @@ if __name__ == "__main__":
     input_bed = sys.argv[1]
     output_bed = sys.argv[2]
     convert_bed(input_bed, output_bed)
-    print(f"内含子提取成功，保存到 {output_bed}")
+    print(f"Introns successfully extracted and saved to {output_bed}")

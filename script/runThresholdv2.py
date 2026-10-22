@@ -65,7 +65,7 @@ def main():
         description='Take the CSQ threshold of BUSCO homologous set ',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument('-i', '--input', required=True, help='输入文件路径')
+    parser.add_argument('-i', '--input', required=True, help='Input file path')
     parser.add_argument('-o', '--output', help='ouput prefix', default='output')
     args = parser.parse_args()
     

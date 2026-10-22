@@ -187,11 +187,11 @@ def get_bam_file(input_items, min_files=2):
     
     # 检查是否有足够数量的BAM文件
     if len(bam_file_paths) < min_files:
-        print(f"错误: 至少需要 {min_files} 个BAM文件才能合并，但只找到了 {len(bam_file_paths)} 个", file=sys.stderr)
+        print(f"Error: Merging requires at least {min_files} BAM files, but only found {len(bam_file_paths)} files", file=sys.stderr)
         sys.exit(1)
     
     # 打印将被处理的BAM文件列表
-    print("\n将要合并的BAM文件:")
+    print("\nBAM files to merge:")
     for bam in bam_file_paths:
         print(f"  - {bam}")
     print()

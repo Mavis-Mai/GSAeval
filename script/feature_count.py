@@ -32,9 +32,9 @@ def run_analysis(fasta_file, gff_file, output_prefix="eval_result"):
     db_seqids = {f.seqid for f in db.all_features() if f.seqid}
     matched = db_seqids.intersection(fasta_seqids)
     if not matched:
-        print("\n🚨 警告: FASTA 和 GFF3 的染色体名称完全不匹配！后续密码子/内含子检查可能会失败。")
-        print(f"   FASTA包含的名称如: {list(fasta_seqids)[:3]}")
-        print(f"   GFF3包含的名称如: {list(db_seqids)[:3]}\n")
+        print("\n🚨 Warning: FASTA and GFF3 chromosome names do not match at all! Subsequent codon/intron checks may fail.")
+        print(f"   Example names in FASTA: {list(fasta_seqids)[:3]}")
+        print(f"   Example names in GFF3: {list(db_seqids)[:3]}\n")
 
     results = []
     total_classic_introns = 0
@@ -45,8 +45,8 @@ def run_analysis(fasta_file, gff_file, output_prefix="eval_result"):
     # 【核心修改区】：不再遍历 'gene'，直接收集所有的 'mRNA' 或 'transcript'
     transcripts = list(db.features_of_type(['mRNA', 'transcript']))
     if not transcripts:
-        print("🚨 错误: GFF3中找不到任何 'mRNA' 或 'transcript' 特征！请检查第三列特征名。")
-        print(f"当前数据库存在的特征有: {list(db.featuretypes())}")
+        print("🚨 Error: No 'mRNA' or 'transcript' features found in GFF3! Check the feature names in column 3.")
+        print(f"Features present in the current database: {list(db.featuretypes())}")
         return
         
     for tx in transcripts:
@@ -155,11 +155,11 @@ def run_analysis(fasta_file, gff_file, output_prefix="eval_result"):
             "Is_Overlapping_Gene": is_overlap
         })
         
-    print(f"   成功提取了 {len(results)} 条转录本记录。")
+    print(f"   Successfully extracted {len(results)} transcript records.")
     
     # [新增的安全检查] 彻底拦截空数据触发 KeyError
     if not results:
-        print("🚨 致命错误: 未收集到任何结果，终止绘图操作。")
+        print("🚨 Fatal error: No results collected. Aborting plotting.")
         return
 
     df = pd.DataFrame(results)

@@ -22,8 +22,8 @@ try:
     from qSCS_statv4_forBUSCO import *
     from runThresholdv2 import *
 except ImportError as e:
-    print(f"Error: 必需的模块 overlap_resolver 未找到。请确保它在脚本所在目录的父目录中。")
-    print(f"错误详情: {e}")
+    print(f"Error: Required module overlap_resolver was not found. Ensure it is in the parent directory of the script directory.")
+    print(f"Error details: {e}")
     sys.exit(1)
 
 ## 1. 文件目录结构：
@@ -388,7 +388,7 @@ def main(args_list=None):
                 seq_result = "|".join(tmpinfo["seq"])
                 f.write(f'{busco}\t{gene}\t{tmpinfo["cds_count"]}\t{tmpinfo["cds_len"]}\t{cds_result}\t{seq_result}\n')
         except:
-            print(f"⚠️ 无法读取或处理 {gene_stat_file}")
+            print(f"⚠️ Unable to read or process {gene_stat_file}")
     f.close()
             
 
@@ -397,11 +397,11 @@ def main(args_list=None):
     for file_path in files_to_remove:
         try:
             os.remove(file_path)  # 删除文件
-            print(f"✅ 删除成功: {file_path}")
+            print(f"✅ Successfully deleted: {file_path}")
         except FileNotFoundError:
-            print(f"⚠️ 文件不存在: {file_path}")
+            print(f"⚠️ File does not exist: {file_path}")
         except Exception as e:
-            print(f"❌ 删除失败: {file_path} - 错误：{e}")
+            print(f"❌ Failed to delete: {file_path} - Error: {e}")
 
 if __name__ == "__main__":
     main()
