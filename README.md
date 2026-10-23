@@ -1,13 +1,13 @@
 ## <font style="color:rgb(0, 0, 0);"> Instructions </font>
 **<font style="color:rgb(0, 0, 0);">GSAeval comprises three core analysis modes:</font>**
 
-<font style="color:rgb(0, 0, 0);">1) CSQ Quick Detection Mode; </font>
+<font style="color:rgb(0, 0, 0);">1) CSQ2db: Quick Detection Mode; </font>
 
-<font style="color:rgb(0, 0, 0);">2) CSQ2sp Inter-Species Gene Comparison Mode; </font>
+<font style="color:rgb(0, 0, 0);">2) CSQ2sp and  CSQ2batch: Inter-Species Gene Comparison Mode; </font>
 
-<font style="color:rgb(0, 0, 0);">3) Tran Transcript-Level Evaluation Mode. </font>
+<font style="color:rgb(0, 0, 0);">3) Tran: Transcript-Level Evaluation Mode. </font>
 
-<font style="color:rgb(0, 0, 0);">The CSQ mode is designed for quick screening of annotation quality, while the CSQ2sp and Tran modes focus on comprehensive assessments at the gene level.</font>
+<font style="color:rgb(0, 0, 0);">The CSQ2db mode is designed for quick screening of annotation quality, while the CSQ2sp/CSQ2batch and Tran modes focus on comprehensive assessments at the gene level.</font>
 
 <font style="color:rgb(0, 0, 0);"></font>
 **** 
@@ -21,26 +21,49 @@
 ### github
 ```shell
 #Install Dependencies
-mamba  create -n GSAeval -c conda-forge  python=3.10.5 
-conda activate GSAeval
+mamba  create -n GSAqualifier -c conda-forge  python=3.10.5 
+conda activate GSAqualifier
 
 mamba  install  -c bioconda  stringtie  mash  regtools gffread
+pip install -r requirements.txt
 ```
 
 ```shell
 # Download code and the datasets tracked with Git LFS
 # Install Git LFS first: https://git-lfs.com/
 git lfs install
-git clone https://github.com/Mavis-Mai/GSAeval.git
+git clone  https://github.com/Mavis-Mai/GSAeval.git
+
 cd GSAeval
 git lfs pull
 chmod +x GSAeval
 export PATH="$PWD:$PATH"
 pip install -r requirements.txt
+
+# download database
+wget https://github.com/Mavis-Mai/GSAeval/releases/download/v1.0.0/GSAeval_Databse_v1.0.tar.gz
+wget https://github.com/Mavis-Mai/GSAeval/releases/download/genome_v1/Genome_lib.tar.gz
+tar -xzf GSAeval_Databse_v1.0.tar.gz
+tar -xzf Genome_lib.tar.gz
+
+GSAeval --help
+```
+
+### singularity
+```
+cd GSAeval
+dirpath=`pwd`
+
+alias GSAeval="singularity exec  \
+--bind $dirpath/Genome_lib/:/opt/GSAeval/Genome_lib:ro  \
+--bind  $dirpath/Dataset/:/opt/GSAeval/Database:ro \
+ $dirpath/GSAeval-2026_08_26-nodata.sif   GSAeval"
+
+GSAeval --help
 ```
 
 
-## <font style="color:rgb(0, 0, 0);"> 01. CSQ mode </font>
+## <font style="color:rgb(0, 0, 0);"> 01. CSQ2db mode </font>
 This mode is specifically designed for the rapid evaluation of splice site accuracy in gene annotations. Users are required to select a suitable reference splice site database based on the species category. By comparing the splicing characteristics of target species genes with homologous genes in the reference database, the system generates a composite evaluation metric called CSQ (Conservative Splice Quality) score. Based on the CSQ score distribution, the system accurately classifies annotated genes into three confidence levels: Good, Moderate, and Poor. Notably, the proportion of genes classified as "Good" can directly reflect the overall accuracy of splice site identification in the genome annotation of a given species, providing researchers with an intuitive quality assessment reference.
 **** 
 
@@ -56,8 +79,19 @@ This mode is specifically designed for the rapid evaluation of splice site accur
 | vertebrata | animal | 2,443 |
 
 ### Quick Start Guide</font>
+1. When no specific database is specified, the program will automatically select a suitable database for analysis
 ```bash
 GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
+```
+
+2. If the BUSCO (odb12 version) alignment results are available, the program will automatically select the corresponding library for comparison
+```bash
+GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv
+```
+
+3. If you want to specify a specific database for comparison
+```bash
+GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b eudicots
 ```
 
 ### Parameter Description
@@ -87,8 +121,8 @@ output_busco_pie.png：
   <img src="images/output_busco_pie.png" alt="pic" width="500">
 </a>
 
-## <font style="color:rgb(0, 0, 0);"> 02. CSQ2sp mode </font>
-This model conducts a detailed and comprehensive analysis of the similarity of each homologous gene by evaluating the CSQ score distribution of homologous genes between two species.
+## <font style="color:rgb(0, 0, 0);"> 02. CSQ2sp mode (One-to-One) </font>
+This mode analyzes homologous genes between two species by evaluating the CSQ score distribution, enabling detailed and comprehensive similarity analysis for each homologous gene.
 **** 
 
 ### Quick Start Guide：
@@ -97,11 +131,10 @@ GSAeval csq2sp -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -F
 -w plant 
 ```
 
-
 ### Parameter Description：
 | Parameter  | Description |
 | --- | --- |
-| -f/--query_fasta | <font style="color:rgb(0, 0, 0);">Input the genome file of the detected species [FASTA] </font>**<font style="color:rgb(0, 0, 0);"><Required ></font>** |
+| -f/--query_fasta | <font style="color:rgb(0, 0, 0);">Input the genome file of the detected species [FASTA]**<****<font style="color:rgb(0, 0, 0);">Required</font>****>**  |
 | -g/--query_gtf | Input the genome annotation file of the detected species [gff/gtf]**<****<font style="color:rgb(0, 0, 0);">Required</font>****>** |
 | -F/--ref_fasta | <font style="color:rgb(0, 0, 0);">Input the genome file of the reference species </font>[fasta]**<****<font style="color:rgb(0, 0, 0);">Required</font>****>** |
 | -G/--ref_gtf | Input the genome annotation file of the reference species [gff/gtf]**<****<font style="color:rgb(0, 0, 0);">Required</font>****>** |
@@ -120,10 +153,58 @@ GSAeval csq2sp -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -F
 | reciprocal_pairs.tsv | Reciprocal gene pairs of homologous genes|
 | CSQ-density.png/CSQ-density.svg | Distribution of CSQ in homologous genes.|
 
+## <font style="color:rgb(0, 0, 0);"> 02. CSQ2batch mode (One-to-Many) </font>
+This mode evaluates the CSQ score distributions of homologous genes between the target species and multiple reference genomes, providing a more comprehensive assessment of the target specie genes.
+**** 
+
+### Start Guide
+1. If the user does not provide reference genome information, the program will automatically use 20 built-in high-quality genome annotations for comparison.
+```
+GSAeval csq2batch -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -w plant 
+```
+
+3. The program supports user-defined reference genome directories using a `species_manifest.tsv` file. The file format is as follows:
+
+| species | fasta |gtf|genepairs (option)|
+| :---: | :---: | :---: | :---: |
+| Nymphaea colorata | Ncolorata_566_v1.0.fa.gz |Ncolorata_566_v1.2.gene.gff3||
+| Arabidopsis thaliana | GCA_978657495.1_TAIR12_genomic_clean.fna|GCA_978657495.1_TAIR12_genomic.gff||
+| Glycine max | Gmax_275_v2.0.fa.gz|Gmax_275_Wm82.a2.v1.gene.gff3||
+
+*Note: The genome files and annotation files must be placed in the same directory as the `species_manifest.tsv` file.*
+
+```
+GSAeval csq2batch -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -w plant -m species_manifest.tsv
+```
+### Parameter Description：
+| Parameter  | Description |
+| --- | --- |
+| -f/--query_fasta | Input the genome file of the detected species [FASTA] **<****<font style="color:rgb(0, 0, 0);">Required</font>****>**  |
+| -g/--query_gtf | Input the genome annotation file of the detected species [gff/gtf]**<****<font style="color:rgb(0, 0, 0);">Required</font>****>** |
+| -w/--weight_type | Select the weight for CSQ calculation as either "plant" or "animal" based on the input species type **<****<font style="color:rgb(0, 0, 0);">Required</font>****>** |
+| -m |  <font style="color:rgb(0, 0, 0);">Table mapping genome files and annotations for reference species <Optional></font>|
+| -o/-output | <font style="color:rgb(0, 0, 0);">Output prefix (default: output) <Optional ></font> |
+| --excusion-species | Exclude specific species from the reference table <Optional> |
+| --reuse | Reuse existing alignment data without rerunning <Optional> |
+| -t/--threads | The number of threads used for alignment (default: 8) <Optional>. |
+
+### Results Description：
+| Result files | Description |
+| :---: | :---: |
+| pairwise | Records homologous gene mapping relationships and corresponding CSQ information |
+| CSQ_summary.tsv | Summary of CSQ data for target species genes and their homologous genes in reference species|
+| gene_assessment.tsv | Classification of target species genes based on CSQ distributions|
+|gene_locus_classify.tsv| Evaluation and classification of gene loci|
+|gene_locus_proportions.tsv| Statistical table of gene locus classifications|
+|gene_locus_proportions.png|Pie chart visualization of gene locus classification stats|
+|generank.png|Ranking chart of CSQ distributions for genes, illustrating their distribution|
+
+
 
 ## <font style="color:rgb(0, 0, 0);"> 03. Tran mode </font>
 This model comprehensively evaluates and analyzes the splicing status of each expressed gene by incorporating user-supplied transcriptome data into the annotation of the target genome.
 **** 
+
 
 ### Quick Start Guide
 ```bash
