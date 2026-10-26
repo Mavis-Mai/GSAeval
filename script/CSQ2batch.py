@@ -1018,7 +1018,7 @@ def main(args_list=None):
         manifest = read_manifest(args.manifest)
     else:
         dirpath = Path(__file__).parent.parent
-        datasetpath=os.path.join(dirpath,"Genome_dataset",args.weight_type)
+        datasetpath=os.path.join(dirpath,"Genome_lib",args.weight_type)
         manifestfile=os.path.join(datasetpath,"species_manifest.tsv")
         manifest = read_manifest(manifestfile,datasetpath)
 

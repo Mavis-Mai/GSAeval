@@ -10,17 +10,134 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import CSQ2spbatch as legacy
+import CSQ2batch as legacy
 
 
 _DATA_CACHE = {}
 _PROTEIN_CACHE = {}
 _LIBRARY_PATH_CACHE = {}
+
+
+def _annotation_attributes(text):
+    """Parse attributes and provide case-insensitive key lookup."""
+    parsed = legacy.parse_gff_attributes(text)
+    return {
+        str(key).strip().lower(): unquote(str(value).strip().strip('"'))
+        for key, value in parsed.items()
+    }
+
+
+def _first_attribute(attributes, names):
+    for name in names:
+        value = attributes.get(name.lower(), "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _split_annotation_ids(value):
+    return list(dict.fromkeys(
+        item.strip() for item in str(value or "").split(",") if item.strip()
+    ))
+
+
+def _transcript_and_gene_ids(feature_type, attributes):
+    """Extract IDs from GFF3/GTF transcript records and GTF child records."""
+    transcript_keys = ("transcript_id", "transcriptid", "transcript")
+    if feature_type in {"transcript", "mrna"}:
+        transcript_keys += ("id",)
+    transcript_id = _first_attribute(attributes, transcript_keys)
+    gene_id = _first_attribute(
+        attributes,
+        ("gene_id", "geneid", "gene", "locus_tag", "parent"),
+    )
+    # On exon/CDS rows, a GFF3 Parent normally points to a transcript rather
+    # than a gene. Only use Parent as gene ID for transcript/mRNA features.
+    if feature_type not in {"transcript", "mrna"}:
+        gene_id = _first_attribute(
+            attributes, ("gene_id", "geneid", "gene", "locus_tag")
+        )
+    return transcript_id, _split_annotation_ids(gene_id)
+
+
+def load_transcript_gene_map(filename):
+    """Map transcripts to genes even when explicit gene features are absent."""
+    mapping = {}
+    with open(filename, encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, 1):
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.rstrip("\n\r").split("\t")
+            if len(fields) != 9:
+                print(
+                    f"[warning] Skip malformed GFF/GTF line {line_number}: {filename}",
+                    file=sys.stderr,
+                )
+                continue
+            feature_type = fields[2].strip().lower()
+            attributes = _annotation_attributes(fields[8])
+            transcript_id, gene_ids = _transcript_and_gene_ids(
+                feature_type, attributes
+            )
+            if not transcript_id or not gene_ids:
+                continue
+            previous = _split_annotation_ids(mapping.get(transcript_id, ""))
+            mapping[transcript_id] = ",".join(
+                dict.fromkeys(previous + gene_ids)
+            )
+    if not mapping:
+        print(
+            f"[warning] No transcript-to-gene relationships found in {filename}",
+            file=sys.stderr,
+        )
+    return mapping
+
+
+def load_target_gene_ids(filename):
+    """Collect explicit and transcript-derived gene IDs in annotation order."""
+    explicit_gene_ids = []
+    transcript_gene_ids = []
+    explicit_seen, transcript_seen = set(), set()
+    with open(filename, encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, 1):
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.rstrip("\n\r").split("\t")
+            if len(fields) != 9:
+                print(
+                    f"[warning] Skip malformed GFF/GTF line {line_number}: {filename}",
+                    file=sys.stderr,
+                )
+                continue
+            feature_type = fields[2].strip().lower()
+            attributes = _annotation_attributes(fields[8])
+            if feature_type == "gene":
+                value = _first_attribute(
+                    attributes,
+                    ("gene_id", "geneid", "gene", "locus_tag", "id"),
+                )
+                for gene_id in _split_annotation_ids(value):
+                    if gene_id not in explicit_seen:
+                        explicit_seen.add(gene_id)
+                        explicit_gene_ids.append(gene_id)
+                continue
+            _, gene_ids = _transcript_and_gene_ids(feature_type, attributes)
+            for gene_id in gene_ids:
+                if gene_id not in transcript_seen:
+                    transcript_seen.add(gene_id)
+                    transcript_gene_ids.append(gene_id)
+
+    # Keep declared gene features first, then append loci recovered from
+    # transcript/mRNA (or GTF child) rows that were not explicitly declared.
+    result = list(explicit_gene_ids)
+    result.extend(gene_id for gene_id in transcript_gene_ids if gene_id not in explicit_seen)
+    return result
 
 
 def _resolve_input(value, base_dir):
@@ -80,10 +197,14 @@ def _valid_file(path):
 def _build_library(fasta, gtf, output_stem, args):
     from csq_oneStep import build_junciton_lib
 
+    # build_junciton_lib -> parse_gtf -> print_debug expects this attribute.
+    # Older batch parsers did not define it, so keep the direct-call path safe.
+    if not hasattr(args, "debug"):
+        args.debug = False
     output_stem = Path(output_stem).resolve()
     output_stem.parent.mkdir(parents=True, exist_ok=True)
     output_file = Path(str(output_stem) + "_lib.tsv")
-    if _valid_file(output_file) and not args.rebuild_libs:
+    if _valid_file(output_file) and not getattr(args, "rebuild_libs", False):
         print(f"[library] Reuse {output_file}")
         return output_file
     print(f"[library] Build {output_file}")
@@ -240,6 +361,11 @@ def parser():
             action.help = (
                 "TSV with species+lib, or species+fasta+gtf; optional genepairs"
             )
+    if not any(action.dest == "debug" for action in result._actions):
+        result.add_argument(
+            "--debug", action="store_true",
+            help="Enable detailed library-building diagnostics.",
+        )
     result.add_argument(
         "--rebuild-libs", action="store_true",
         help="Rebuild generated target/reference libraries instead of reusing cache.",
@@ -259,6 +385,8 @@ def main(args_list=None):
     legacy.read_manifest = read_manifest
     legacy.run_pairwise = run_pairwise
     legacy.build_trees = build_trees
+    legacy.load_transcript_gene_map = load_transcript_gene_map
+    legacy.load_target_gene_ids = load_target_gene_ids
     legacy.parser = parser
     return legacy.main(args_list)
 
