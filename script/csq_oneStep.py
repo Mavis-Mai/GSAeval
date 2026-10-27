@@ -180,13 +180,26 @@ def diamond(seq_q,seq_r,threads="8"):
         sys.exit(0)
     
     blastdata=pd.read_csv("seq2BUSCO.blast",usecols=[0,1,11],names=['gene_id','busco_id','score'],sep="\t")
+    if blastdata.empty:
+        raise RuntimeError(
+            "No homologous genes were found by DIAMOND (seq2BUSCO.blast is empty). "
+            "Check that the reference library (-b) matches the species group "
+            "(plant: eudicots/monocot/embryophyta; animal: aves/mammalia/sauropsida/"
+            "vertebrata/actinopterygii), or provide a BUSCO full table with -l."
+        )
     #取第二个最优匹配的
-    result = blastdata.loc[blastdata.groupby('gene_id')['score'].apply(lambda x: x.nlargest(1).idxmin())] 
+    result = blastdata.loc[blastdata.groupby('gene_id')['score'].apply(lambda x: x.nlargest(1).idxmin())]
     result = result.reset_index(drop=True)
-    
+
     split_cols = result['busco_id'].str.split('-', n=1, expand=True)
-    result['busco_id_'] = split_cols[0] 
-    result['busco_gene'] = split_cols[1] 
+    if 1 not in split_cols.columns or split_cols[1].isna().any():
+        raise RuntimeError(
+            "Reference library IDs must be in '<busco_id>-<gene_name>' format "
+            "(e.g. 1295386at3193-Ped01Dg38660.1), but found IDs without '-'. "
+            "Check the reference library file."
+        )
+    result['busco_id_'] = split_cols[0]
+    result['busco_gene'] = split_cols[1]
     genepairs=result[["gene_id","busco_id_","busco_gene"]]
     genepairs.colname=["gene_id","busco_id","busco_gene"]
     print(genepairs)
