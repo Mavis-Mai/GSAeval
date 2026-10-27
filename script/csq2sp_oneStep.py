@@ -182,7 +182,13 @@ def read_table(file):
     return genelist
     
 def drawdenstiy(file):
+    if not os.path.isfile(file) or os.path.getsize(file) == 0:
+        print(f"No CSQ records in {file}; skip density plot.")
+        return
     dataset1=pd.read_csv(file,sep="\t",header=0)
+    if dataset1.empty or dataset1['CSQ'].dropna().empty:
+        print(f"No CSQ records in {file}; skip density plot.")
+        return
     rs_95=dataset1['CSQ'].quantile(0.25)
     plt.figure(figsize=(6, 4)) 
     ax=sns.kdeplot(
@@ -191,6 +197,10 @@ def drawdenstiy(file):
         #fill=True,
         color='gray',
         alpha=0.5,)
+    if not ax.lines:
+        print(f"CSQ values in {file} are too few or degenerate to draw a density curve; skip.")
+        plt.close()
+        return
     line = ax.lines[0]
     x = line.get_xdata()
     y = line.get_ydata()
@@ -219,7 +229,7 @@ def main(args_list=None):
     group.add_argument('--no-reciprocal', dest='reciprocal', action='store_false',
                        help='Use one-way DIAMOND alignment')
     parser.set_defaults(reciprocal=True)
-    parser.add_argument('-k', '---max-target-seqs', default=2, help='hit the number of Diamonds')
+    parser.add_argument('-k', '--max-target-seqs', dest='max_target_seqs', type=int, default=2, help='hit the number of Diamonds')
     parser.add_argument('-d', '--type', default="CDS", help='mode:CDS or exon.')
 
     parser.add_argument('-t', '--threads', default=8, help='cpu number')
@@ -234,6 +244,10 @@ def main(args_list=None):
     print(args)
     db_query_file=build_junciton_lib(args.query_fasta,args.query_gtf,args.type,"query",args)
     db_ref_file=build_junciton_lib(args.ref_fasta,args.ref_gtf,args.type,"ref",args)
+    for lib in (db_query_file, db_ref_file):
+        if os.path.getsize(lib) == 0:
+            sys.exit(f"No spliced (multi-exon) genes were found in {lib}; "
+                     f"CSQ analysis is based on splice junctions and requires genes with introns.")
     db_query=load_junction_data(db_query_file)
     db_ref=load_junction_data(db_ref_file)
     print("The data has been loaded.")
@@ -243,9 +257,9 @@ def main(args_list=None):
         queryfile=getProt(db_query,"query",False)
         reffile=getProt(db_ref,"ref",False)
         if args.reciprocal:
-            genepairs=reciprocal_diamond_blast(queryfile,reffile,args.threads)
+            genepairs=reciprocal_diamond_blast(queryfile,reffile,args.threads,k=args.max_target_seqs)
         else:
-            genepairs=single_diamond_blast(queryfile,reffile,args.threads)
+            genepairs=single_diamond_blast(queryfile,reffile,args.threads,k=args.max_target_seqs)
         pairsnum=len(genepairs)
         print(genepairs)
         qCSStsvfile=csq_calculation2db(db_query,db_ref,genepairs,args.output,args.weight_type)

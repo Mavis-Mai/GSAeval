@@ -204,9 +204,26 @@ def _build_library(fasta, gtf, output_stem, args):
     output_stem = Path(output_stem).resolve()
     output_stem.parent.mkdir(parents=True, exist_ok=True)
     output_file = Path(str(output_stem) + "_lib.tsv")
+    meta_file = output_file.with_name(output_file.name + ".meta")
+
+    def _input_meta():
+        def finfo(p):
+            st = Path(p).stat()
+            return f"{st.st_size}:{int(st.st_mtime)}"
+        return (f"type={getattr(args, 'type', 'CDS')}\n"
+                f"fasta={finfo(fasta)}\n"
+                f"gtf={finfo(gtf)}\n")
+
     if _valid_file(output_file) and not getattr(args, "rebuild_libs", False):
-        print(f"[library] Reuse {output_file}")
-        return output_file
+        if not meta_file.is_file():
+            print(f"[library] Reuse {output_file} (no build metadata found; "
+                  f"pass --rebuild-libs to force a rebuild)")
+            return output_file
+        if meta_file.read_text() == _input_meta():
+            print(f"[library] Reuse {output_file}")
+            return output_file
+        print(f"[library] {output_file.name} was built with different inputs or "
+              f"type; rebuilding")
     print(f"[library] Build {output_file}")
     result = build_junciton_lib(
         fasta, gtf, args.type, str(output_stem), args
@@ -214,6 +231,7 @@ def _build_library(fasta, gtf, output_stem, args):
     result = Path(result).resolve()
     if not _valid_file(result):
         raise RuntimeError(f"Library build did not produce a valid file: {result}")
+    meta_file.write_text(_input_meta())
     return result
 
 

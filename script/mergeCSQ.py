@@ -183,6 +183,11 @@ def read_all_csq_files(input_dir):
         if not key:
             key = record["filename"]
 
+        if key in csqstat_dict:
+            print(f"[WARN] Duplicate key '{key}' (from {record['filename']}); "
+                  f"using the filename to keep both records.")
+            key = record["filename"]
+
         csqstat_dict[key] = {
             "Good": record["Good"],
             "Moderate": record["Moderate"],
