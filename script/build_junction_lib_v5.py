@@ -29,7 +29,7 @@ def parse_attributes(attr_str):
 
 def gff3_to_gtf(gff3_file, gtf_file):
     import subprocess
-    subprocess.run(["gffread", gff3_file, "-T", "-o", gtf_file])
+    subprocess.run(["gffread", gff3_file, "-T", "-o", gtf_file], check=True)
 
 def parse_gtf(gtf_file, args={}):
     """解析GTF文件，返回transcript、外显子和CDS信息"""
@@ -86,7 +86,7 @@ def parse_gtf(gtf_file, args={}):
         
     except Exception as e:
         print(f"Error reading GTF file: {str(e)}", file=sys.stderr)
-        #sys.exit(1)
+        sys.exit(1)
 
 def merge_exons_cds(exons, cdses):
     """合并外显子和CDS信息"""
@@ -132,21 +132,21 @@ def calculate_entry(exon, chrom_seq, isFirst, isEnd, strand):
             right = chrom_seq[exon_end:exon_end+2].upper() if exon_end+2 <= len(chrom_seq) else None
         else:
             left= None
-            right = reverse_complement(chrom_seq[exon_start-3:exon_start-1].upper()) if exon_start-2 >=0 else None
+            right = reverse_complement(chrom_seq[exon_start-3:exon_start-1].upper()) if exon_start >= 3 else None
     elif isEnd:
         if strand == '+':
-            left = chrom_seq[exon_start-3:exon_start-1].upper() if exon_start-2 <= len(chrom_seq) else None
+            left = chrom_seq[exon_start-3:exon_start-1].upper() if exon_start >= 3 else None
             right = None
         else:
             left = reverse_complement(chrom_seq[exon_end:exon_end+2].upper()) if exon_end+2 <= len(chrom_seq) else None
             right = None
     else:
         if strand == '+':
-            left = chrom_seq[exon_start-3:exon_start-1].upper() 
-            right = chrom_seq[exon_end:exon_end+2].upper() 
+            left = chrom_seq[exon_start-3:exon_start-1].upper() if exon_start >= 3 else None
+            right = chrom_seq[exon_end:exon_end+2].upper() if exon_end+2 <= len(chrom_seq) else None
         else:
-            left = reverse_complement(chrom_seq[exon_end:exon_end+2].upper()) 
-            right = reverse_complement(chrom_seq[exon_start-3:exon_start-1].upper()) 
+            left = reverse_complement(chrom_seq[exon_end:exon_end+2].upper()) if exon_end+2 <= len(chrom_seq) else None
+            right = reverse_complement(chrom_seq[exon_start-3:exon_start-1].upper()) if exon_start >= 3 else None
     return f"({phase if phase is not None else 'None'},{exon_len},{left if left else '.'},{right if right else '.'})"
 
 def reverse_complement(seq):

@@ -160,8 +160,11 @@ def summarize(tsvfile,threshold_table,output,missinglist,lib,fasta):
     args_list=['-i',tsvfile,'-o',output,'-t',threshold_table,'--miss',missinglist,'-b',lib,'-f',fasta]
     module.main(args_list)
     
-def diamond(seq_q,seq_r,threads="8"):  
+def diamond(seq_q,seq_r,threads="8"):
     diamond_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),"diamond")
+    for label, path in (("query", seq_q), ("reference", seq_r)):
+        if not os.path.isfile(path) or os.path.getsize(path) == 0:
+            raise RuntimeError(f"DIAMOND {label} file is empty or missing: {path}")
     try:
         print(f"running diamond")
         subprocess.run(
@@ -347,6 +350,9 @@ def main(args_list=None):
     
     #读取数据
     outputfile=build_junciton_lib(args.fasta,args.gtf,args.type,args.output,args)
+    if os.path.getsize(outputfile) == 0:
+        sys.exit("No spliced (multi-exon) genes were found in the annotation. "
+                 "CSQ analysis is based on splice junctions and requires genes with introns.")
     dirpath = Path(__file__).parent.parent
     datasetpath=os.path.join(dirpath,"Dataset")
     libdict={
@@ -355,7 +361,7 @@ def main(args_list=None):
         "embryophyta":(os.path.join(datasetpath,"v3_embryophyta_lib.txt"),os.path.join(datasetpath,"v3_embryophyta_odb12_threshold.txt"),"plant"),
         "aves":(os.path.join(datasetpath,"v3_Aves_lib.txt"),os.path.join(datasetpath,"v3_Aves_threshold.txt"),"animal"),
         "mammalia":(os.path.join(datasetpath,"v3_Mammalia_lib.txt"),os.path.join(datasetpath,"v3_Mammalia_threshold.txt"),"animal"),
-        "sauropsida":(os.path.join(datasetpath,"v2_Sauropsida_lib.txt"),os.path.join(datasetpath,"v3_Mammalia_threshold.txt"),"animal"),
+        "sauropsida":(os.path.join(datasetpath,"v2_Sauropsida_lib.txt"),os.path.join(datasetpath,"v2_Sauropsida_threshold.txt"),"animal"),
         "vertebrata":(os.path.join(datasetpath,"v2_vertebrata_lib.txt"),os.path.join(datasetpath,"v2_vertebrata_threshold.txt"),"animal"),
         "actinopterygii":(os.path.join(datasetpath,"v3_actinopterygii_lib.txt"),os.path.join(datasetpath,"v3_actinopterygii_threshold.txt"),"animal")
     }
@@ -442,9 +448,12 @@ def main(args_list=None):
         copypict(pattern,"CSQ.png","Template.md")
         
         reportfile=os.path.join(os.getcwd(),"Template.md/CSQ-template.md")
-        pattern = os.path.join(os.getcwd(), "*_stat.txt")
-        CSQstat=glob.glob(pattern)[0]
+        CSQstat=os.path.join(os.getcwd(), f"{args.output}.CSQ_stat.txt")
+        if not os.path.exists(CSQstat):
+            sys.exit(f"Report error: {CSQstat} not found.")
         CSQdf = pd.read_csv(CSQstat,header=0,sep="\t")
+        # csq_summarize appends prose footer lines to the stat file; keep only the table rows
+        CSQdf = CSQdf[CSQdf["label"].isin(["Good","Moderate","Poor","Missing"])]
         #print(CSQdf)
         busco_data = list(zip(CSQdf['label'], CSQdf['count'], CSQdf['frequency(%)']))
         update_csq( template_path=reportfile,new_table_data=busco_data)
