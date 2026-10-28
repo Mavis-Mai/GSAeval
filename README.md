@@ -37,6 +37,7 @@ git clone  https://github.com/Mavis-Mai/GSAeval.git
 cd GSAeval
 git lfs pull
 chmod +x GSAeval
+chmod +x script/diamond
 export PATH="$PWD:$PATH"
 pip install -r requirements.txt
 
