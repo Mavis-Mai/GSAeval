@@ -23,7 +23,7 @@ class GSAeval:
             'csq': {
                 'description': 'Alias of csq2db.',
                 'function':  "csq_oneStep",
-                'type': 'Overview'
+                'type': 'non-Showed'
             },
             'csq2sp': {
                 'description': 'The integration process of CSQ comparing in two species',
