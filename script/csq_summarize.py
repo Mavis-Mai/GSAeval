@@ -1,3 +1,5 @@
+import sys
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -49,8 +51,8 @@ def plot_pie(df,output,format,lib):
     # 使用 adjustText 调整标签
 
     legend_labels = [f"{l}: {c}" for l, c in zip(plot_data['label'], plot_data['count'])]
-    missingcount=plot_data.loc[plot_data['label']=="Missing"]['count']
-    legend_labels.append(f"Missing: {missingcount}")  
+    missingcount = df.loc[df['label'] == 'Missing', 'count'].sum()
+    legend_labels.append(f"Missing: {int(missingcount)}")
     plt.legend(
         title=f"Database: {lib}",
         loc="upper left",
@@ -74,7 +76,7 @@ def main(args_list=None):
     parser.add_argument('-i', '--CSQ_file', required=True, help='CSQ information of each BUSCO of the species')
     parser.add_argument('-t', '--threshold_table', required=True, help='threshold information of each BUSCO')
     parser.add_argument('--fig_format',default="svg", help='The selection of graphic format. such as:svg, png, pdf')
-    parser.add_argument('--csq_threshold',default=0.90, help='a CSQ experience threshold')
+    parser.add_argument('--csq_threshold',default=0.90, type=float, help='a CSQ experience threshold')
     parser.add_argument('--miss', help='missing busco list')
     parser.add_argument('-b', '--library', help='The highly conserved BUSCO gene library (eudicots/monocot/embryophyta)', metavar='LIB' )
     parser.add_argument('-f', '--fasta', help='Input genome FASTA file (required for analysis mode)',  metavar='FILE')
@@ -84,7 +86,10 @@ def main(args_list=None):
     #args = parser.parse_args()
     args = parser.parse_args(args_list) if args_list else parser.parse_args()
     database_name=args.library
-    df_=pd.read_csv(args.CSQ_file, sep="\t",header=0,index_col=False) 
+    if not os.path.isfile(args.CSQ_file) or os.path.getsize(args.CSQ_file) == 0:
+        sys.exit(f"No CSQ records in {args.CSQ_file}; nothing to summarize "
+                 f"(all genes single-exon or no homologous pair matched?).")
+    df_=pd.read_csv(args.CSQ_file, sep="\t",header=0,index_col=False)
     df_=df_.fillna(0)
     result = df_.loc[
         df_.groupby(["BUSCO", "GeneA"])["CSQ"].idxmax()
@@ -101,9 +106,11 @@ def main(args_list=None):
         try:
             thresthold=df_thresthold.loc[df_thresthold["busco"]==busco_id]["threshold"].values[0]
         except IndexError:
-            print(busco_id)
+            print(f"Warning: {busco_id} not found in threshold table; "
+                  f"falling back to the generic CSQ threshold.")
+            thresthold=None
         #print(thresthold)
-        if CSQ_tmp >= thresthold:
+        if thresthold is not None and CSQ_tmp >= thresthold:
             label='Good'
         elif CSQ_tmp >= args.csq_threshold:
             label='Good'

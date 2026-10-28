@@ -20,6 +20,11 @@ class GSAeval:
                 'function':  "csq_oneStep",
                 'type': 'Overview'
             },
+            'csq2db': {
+                'description': 'Alias of csq.',
+                'function':  "csq_oneStep",
+                'type': 'Overview'
+            },
             'csq2sp': {
                 'description': 'The integration process of CSQ comparing in two species',
                 'function':  "csq2sp_oneStep",

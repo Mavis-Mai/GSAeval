@@ -15,11 +15,11 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 sys.path.insert(0, str(Path(__file__).parent))
 try:
     from build_junction_lib_v5 import *
-    from qscs_oneStep import *
+    from csq_oneStep import *
     from loaddata import *
-    from qscs_calculationv2 import *
-    from csq2sp_oneStep import qscs_calculation2db,read_table
-    from qSCS_statv4_forBUSCO import *
+    from csq_calculation import *
+    from csq2sp_oneStep import csq_calculation2db,read_table
+    from CSQ_statv4_forBUSCO import *
     from runThresholdv2 import *
 except ImportError as e:
     print(f"Error: Required module overlap_resolver was not found. Ensure it is in the parent directory of the script directory.")
@@ -59,6 +59,9 @@ def build_lib_Sps(genome_dir,args):
         genome_path = genome_files[0]
 
         annot_files = (glob.glob(os.path.join(species_dir, "*.gff*"))+glob.glob(os.path.join(species_dir, "*.gtf")))
+        if not annot_files:
+            print(f"⚠️ FATAL: Annotation file not found in {species_name}.")
+            continue
         annot_path=annot_files[0]
         print(genome_path)
         print(annot_path)
@@ -95,7 +98,7 @@ def find_conserved_busco_ids(busco_tsv_dir, output_file):
             for line in f:
                 #if line.startswith(('Complete', 'Duplicated')):
                 parts = line.strip().split('\t')
-                if len(parts) >= 3 and parts[1].lower in ['complete', 'duplicated']:
+                if len(parts) >= 3 and parts[1].lower() in ['complete', 'duplicated']:
                     busco_id = parts[0]
                     #print(busco_id)
                     file_buscos.add(busco_id)
@@ -238,7 +241,7 @@ def final_processing(output='output',input='filter_busco_threshold.txt', min_csq
     
     print(f"Processing complete. Final file contains {len(filtered_lines)} records.")
 
-def process_single_busco(busco, cbdf, merged_data):
+def process_single_busco(busco, cbdf, merged_data, weight_type="plant"):
     """
     独立的工作函数：处理单个 busco 的完整逻辑
     """
@@ -262,7 +265,7 @@ def process_single_busco(busco, cbdf, merged_data):
         pass
     else:
         try:
-            qCSStsvfile = qscs_calculation2db(merged_data, merged_data, genelist, output_path)
+            qCSStsvfile = csq_calculation2db(merged_data, merged_data, genelist, output_path, weight_type)
             
             # 计算阈值 (修复了原代码的 & 符号 Bug)
             genenum = len(tmpdf["geneid"])
@@ -317,8 +320,10 @@ def main(args_list=None):
     parser.add_argument('-f', '--genome_dir', required=True, help='Input directory including genome(fa) and annotation(gxf) of different species')
     parser.add_argument('-l', '--busco_tsv_dir', required=True, help='Input directory including busco gene pairs list(tsv) of different species')
     parser.add_argument('-o', '--output', default='output', help='output prefix of database directory')
-    parser.add_argument('-n', '--cpu', default=10, help='cpu number used in parallel jobs')
+    parser.add_argument('-n', '--cpu', default=10, type=int, help='cpu number used in parallel jobs')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument('-w', '--weight_type', default='plant', choices=['plant', 'animal'],
+                help='Weight coefficients used when building the database')
 
     args = parser.parse_args(args_list) if args_list else parser.parse_args()
     #建库
@@ -340,7 +345,7 @@ def main(args_list=None):
     with ProcessPoolExecutor(max_workers=cores_to_use) as executor:
         # 提交所有任务到进程池
         futures = [
-            executor.submit(process_single_busco, busco, cbdf, merged_data) 
+            executor.submit(process_single_busco, busco, cbdf, merged_data, args.weight_type)
             for busco in conserved_buscos
         ]
         
@@ -357,7 +362,7 @@ def main(args_list=None):
     min_length=0
     if len(liblist)<=5:
         min_length=math.comb(int(len(liblist)*0.9),2)
-    elif genenum>5:
+    else:
         min_length=math.comb(int(len(liblist)*0.8),2)
     
     create_combined_summary("Dataset",output='conservative_BUSCO_summary.tsv')
