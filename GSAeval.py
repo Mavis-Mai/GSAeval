@@ -15,7 +15,7 @@ class GSAeval:
         self.version = "2026_08_26"
         self.script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "script")
         self.tools = {
-            'csq': {
+            'csq2db': {
                 'description': 'The integration process of CSQ, including build, calculate and summarize.',
                 'function':  "csq_oneStep",
                 'type': 'Overview'
