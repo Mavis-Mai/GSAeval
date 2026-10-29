@@ -161,7 +161,7 @@ This mode evaluates the CSQ score distributions of homologous genes between the 
 GSAeval csq2batch -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -w plant 
 ```
 
-3. The program supports user-defined reference genome directories using a `species_manifest.tsv` file. The file format is as follows:
+2. The program supports user-defined reference genome directories using a `species_manifest.tsv` file. The file format is as follows:
 
 | species | fasta |gtf|genepairs (option)|
 | :---: | :---: | :---: | :---: |
