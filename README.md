@@ -21,10 +21,10 @@
 ### github
 ```shell
 #Install Dependencies
-conda  create -n GSAqualifier -c conda-forge  python=3.10.5 
-conda activate GSAqualifier
+conda  create -n GSAeval -c conda-forge  python=3.10.5 
+conda activate GSAeval
 
-conda  install  -c bioconda  stringtie  mash  regtools gffread
+conda  install  -c bioconda  stringtie  mash  regtools gffread bedtools
 ```
 
 ```shell
