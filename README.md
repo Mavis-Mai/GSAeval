@@ -41,9 +41,7 @@ export PATH="$PWD:$PATH"
 pip install -r requirements.txt
 
 # download database
-wget https://github.com/Mavis-Mai/GSAeval/releases/download/v1.0.0/GSAeval_Databse_v1.0.tar.gz
 wget https://github.com/Mavis-Mai/GSAeval/releases/download/genome_v1/Genome_lib.tar.gz
-tar -xzf GSAeval_Databse_v1.0.tar.gz
 tar -xzf Genome_lib.tar.gz
 
 GSAeval --help
