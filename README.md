@@ -81,17 +81,17 @@ This mode is specifically designed for the rapid evaluation of splice site accur
 ### Quick Start Guide</font>
 1. When no specific database is specified, the program will automatically select a suitable database for analysis
 ```bash
-GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
+GSAeval csq2db -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
 ```
 
 2. If the BUSCO (odb12 version) alignment results are available, the program will automatically select the corresponding library for comparison
 ```bash
-GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv
+GSAeval csq2db -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv
 ```
 
 3. If you want to specify a specific database for comparison
 ```bash
-GSAeval csq -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b eudicots
+GSAeval csq2db -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b eudicots
 ```
 
 ### Parameter Description
