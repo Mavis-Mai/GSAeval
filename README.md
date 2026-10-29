@@ -25,7 +25,6 @@ mamba  create -n GSAqualifier -c conda-forge  python=3.10.5
 conda activate GSAqualifier
 
 mamba  install  -c bioconda  stringtie  mash  regtools gffread
-pip install -r requirements.txt
 ```
 
 ```shell
