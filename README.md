@@ -153,7 +153,7 @@ GSAeval csq2sp -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff -F
 | reciprocal_pairs.tsv | Reciprocal gene pairs of homologous genes|
 | CSQ-density.png/CSQ-density.svg | Distribution of CSQ in homologous genes.|
 
-## <font style="color:rgb(0, 0, 0);"> 02. CSQ2batch mode (One-to-Many) </font>
+## <font style="color:rgb(0, 0, 0);"> 03. CSQ2batch mode (One-to-Many) </font>
 This mode evaluates the CSQ score distributions of homologous genes between the target species and multiple reference genomes, providing a more comprehensive assessment of the target specie genes.
 **** 
 
@@ -201,7 +201,7 @@ GSAeval csq2batch -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff
 
 
 
-## <font style="color:rgb(0, 0, 0);"> 03. Tran mode </font>
+## <font style="color:rgb(0, 0, 0);"> 04. Tran mode </font>
 This model comprehensively evaluates and analyzes the splicing status of each expressed gene by incorporating user-supplied transcriptome data into the annotation of the target genome.
 **** 
 
