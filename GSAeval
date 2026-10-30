@@ -30,7 +30,7 @@ class GSAeval:
                 'function':  "csq2sp_oneStep",
                 'type': 'Gobal assessment'
             },
-            'csq2spbatch': {
+            'csq2batch': {
                 'description': 'Batch CSQ comparison, conserved-gene NJ trees, and gene assessment',
                 'function':  "CSQ2batchv2",
                 'type': 'Gobal assessment'
