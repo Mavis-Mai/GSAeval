@@ -15,7 +15,7 @@ class GSAeval:
         self.version = "2026_08_26"
         self.script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "script")
         self.tools = {
-            'csq2db': {
+            'csq2ref': {
                 'description': 'The integration process of CSQ, including build, calculate and summarize.',
                 'function':  "csq_oneStep",
                 'type': 'Overview'
@@ -51,7 +51,7 @@ class GSAeval:
                 'function': "mergeCSQ",
                 'type': 'Other Tools'
             },
-             'tran': {
+             'transqc': {
                 'description': 'The integration assessment process of RNA-seq, including the detection of gene number, splice junction, TES/TSS from RNA-seq, and reporter generation.',
                 'function':  "rna_oneStep",
                 'type': 'Gobal assessment'
