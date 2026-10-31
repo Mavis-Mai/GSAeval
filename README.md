@@ -1,13 +1,13 @@
 ## <font style="color:rgb(0, 0, 0);"> Instructions </font>
 **<font style="color:rgb(0, 0, 0);">GSAeval comprises three core analysis modes:</font>**
 
-<font style="color:rgb(0, 0, 0);">1) CSQ2db: Quick Detection Mode; </font>
+<font style="color:rgb(0, 0, 0);">1) CSQ2ref: Quick Detection Mode; </font>
 
 <font style="color:rgb(0, 0, 0);">2) CSQ2sp and  CSQ2batch: Inter-Species Gene Comparison Mode; </font>
 
-<font style="color:rgb(0, 0, 0);">3) Tran: Transcript-Level Evaluation Mode. </font>
+<font style="color:rgb(0, 0, 0);">3) TransQC: Transcript-Level Evaluation Mode. </font>
 
-<font style="color:rgb(0, 0, 0);">The CSQ2db mode is designed for quick screening of annotation quality, while the CSQ2sp/CSQ2batch and Tran modes focus on comprehensive assessments at the gene level.</font>
+<font style="color:rgb(0, 0, 0);">The CSQ2ref mode is designed for quick screening of annotation quality, while the CSQ2sp/CSQ2batch and TransQC modes focus on comprehensive assessments at the gene level.</font>
 
 <font style="color:rgb(0, 0, 0);"></font>
 **** 
@@ -55,13 +55,13 @@ dirpath=`pwd`
 alias GSAeval="singularity exec  \
 --bind $dirpath/Genome_lib/:/opt/GSAeval/Genome_lib:ro  \
 --bind  $dirpath/Dataset/:/opt/GSAeval/Database:ro \
- $dirpath/GSAeval-2026_08_26-nodata.sif   GSAeval"
+ $dirpath/GSAeval-2026_10_31.sif   GSAeval"
 
 GSAeval --help
 ```
 
 
-## <font style="color:rgb(0, 0, 0);"> 01. CSQ2db mode </font>
+## <font style="color:rgb(0, 0, 0);"> 01. CSQ2ref mode </font>
 This mode is specifically designed for the rapid evaluation of splice site accuracy in gene annotations. Users are required to select a suitable reference splice site database based on the species category. By comparing the splicing characteristics of target species genes with homologous genes in the reference database, the system generates a composite evaluation metric called CSQ (Conservative Splice Quality) score. Based on the CSQ score distribution, the system accurately classifies annotated genes into three confidence levels: Good, Moderate, and Poor. Notably, the proportion of genes classified as "Good" can directly reflect the overall accuracy of splice site identification in the genome annotation of a given species, providing researchers with an intuitive quality assessment reference.
 **** 
 
@@ -79,17 +79,17 @@ This mode is specifically designed for the rapid evaluation of splice site accur
 ### Quick Start Guide</font>
 1. When no specific database is specified, the program will automatically select a suitable database for analysis
 ```bash
-GSAeval csq2db -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
+GSAeval csq2ref -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv  -b eudicots
 ```
 
 2. If the BUSCO (odb12 version) alignment results are available, the program will automatically select the corresponding library for comparison
 ```bash
-GSAeval csq2db -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv
+GSAeval csq2ref -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -l full_table.tsv
 ```
 
 3. If you want to specify a specific database for comparison
 ```bash
-GSAeval csq2db -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b eudicots
+GSAeval csq2ref -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b eudicots
 ```
 
 ### Parameter Description
@@ -199,14 +199,14 @@ GSAeval csq2batch -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff
 
 
 
-## <font style="color:rgb(0, 0, 0);"> 04. Tran mode </font>
+## <font style="color:rgb(0, 0, 0);"> 04. TransQC mode </font>
 This model comprehensively evaluates and analyzes the splicing status of each expressed gene by incorporating user-supplied transcriptome data into the annotation of the target genome.
 **** 
 
 
 ### Quick Start Guide
 ```bash
-GSAeval tran -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b bamfile/ -t 10
+GSAeval transqc -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b bamfile/ -t 10
 ```
 ### Parameter Description：
 | Parameter | Description |
