@@ -12,8 +12,8 @@
 <font style="color:rgb(0, 0, 0);"></font>
 **** 
 
-<a href="images/Figure1v8.jpg">
-  <img src="images/Figure1v8.jpg" alt="pic" width="700">
+<a href="images/Fig.7v8.jpg">
+  <img src="images/Fig.7v8.jpg" alt="pic" width="700">
 </a>
 
 
