@@ -51,7 +51,7 @@ class GSAeval:
                 'function': "mergeCSQ",
                 'type': 'Other Tools'
             },
-             'transqc': {
+             'transevi': {
                 'description': 'The integration assessment process of RNA-seq, including the detection of gene number, splice junction, TES/TSS from RNA-seq, and reporter generation.',
                 'function':  "rna_oneStep",
                 'type': 'Gobal assessment'
