@@ -5,7 +5,7 @@
 
 <font style="color:rgb(0, 0, 0);">2) CSQ2sp and  CSQ2batch: Inter-Species Gene Comparison Mode; </font>
 
-<font style="color:rgb(0, 0, 0);">3) TransQC: Transcript-Level Evaluation Mode. </font>
+<font style="color:rgb(0, 0, 0);">3) TransEVI: Transcript-Level Evaluation Mode. </font>
 
 <font style="color:rgb(0, 0, 0);">The CSQ2ref mode is designed for quick screening of annotation quality, while the CSQ2sp/CSQ2batch and TransQC modes focus on comprehensive assessments at the gene level.</font>
 
@@ -199,14 +199,14 @@ GSAeval csq2batch -f Oryza_sativa_NIP.genomic.fa -g Oryza_sativa_NIP.genomic.gff
 
 
 
-## <font style="color:rgb(0, 0, 0);"> 04. TransQC mode </font>
+## <font style="color:rgb(0, 0, 0);"> 04. TransEVI mode </font>
 This model comprehensively evaluates and analyzes the splicing status of each expressed gene by incorporating user-supplied transcriptome data into the annotation of the target genome.
 **** 
 
 
 ### Quick Start Guide
 ```bash
-GSAeval transqc -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b bamfile/ -t 10
+GSAeval transevi -f  Arabidopsis_thaliana.genome.fna -g Arabidopsis_thaliana.genome.gff3 -b bamfile/ -t 10
 ```
 ### Parameter Description：
 | Parameter | Description |
