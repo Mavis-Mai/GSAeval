@@ -7,7 +7,7 @@
 
 <font style="color:rgb(0, 0, 0);">3) TransEVI: Transcript-Level Evaluation Mode. </font>
 
-<font style="color:rgb(0, 0, 0);">The CSQ2ref mode is designed for quick screening of annotation quality, while the CSQ2sp/CSQ2batch and TransQC modes focus on comprehensive assessments at the gene level.</font>
+<font style="color:rgb(0, 0, 0);">The CSQ2ref mode is designed for quick screening of annotation quality, while the CSQ2sp/CSQ2batch and TransEVI modes focus on comprehensive assessments at the gene level.</font>
 
 <font style="color:rgb(0, 0, 0);"></font>
 **** 
