@@ -50,6 +50,7 @@ GSAeval --help
 ```
 # download demodata
 wget https://github.com/Mavis-Mai/GSAeval/releases/download/1.0/demodata.tar.gz
+tar -xzf demodata.tar.gz
 ```
 
 ### singularity
