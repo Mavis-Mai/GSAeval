@@ -47,6 +47,11 @@ tar -xzf Genome_lib.tar.gz
 GSAeval --help
 ```
 
+```
+# download demodata
+wget https://github.com/Mavis-Mai/GSAeval/releases/download/1.0/demodata.tar.gz
+```
+
 ### singularity
 ```
 cd GSAeval
