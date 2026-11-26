@@ -125,6 +125,8 @@ output_busco_pie.png：
   <img src="images/output_busco_pie.png" alt="pic" width="500">
 </a>
 
+*Note: The reference genes were screened for conservation during construction of the reference library.*
+
 ## <font style="color:rgb(0, 0, 0);"> 02. CSQ2sp mode (One-to-One) </font>
 This mode analyzes homologous genes between two species by evaluating the CSQ score distribution, enabling detailed and comprehensive similarity analysis for each homologous gene.
 **** 
